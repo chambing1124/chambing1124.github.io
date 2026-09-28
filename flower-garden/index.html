@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14221d">
+  <meta name="description" content="花语秘境：一座可漫步、查询、感受的线上四季花园。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231c342b'/%3E%3Ctext x='6' y='24' font-size='24' fill='%23e5d5b0'%3E花%3C/text%3E%3C/svg%3E">
+<title>花语秘境 · 四季花园</title>
+  <style>
+    /* ==================== Design tokens ==================== */
+    :root {
+      --ink: #18231e;
+      --ink-soft: #435047;
+      --paper: #f5f3ee;
+      --paper-warm: #ebe8df;
+      --mist: #dfe5df;
+      --moss: #365448;
+      --moss-deep: #1c342b;
+      --rose: #a96969;
+      --amber: #c28b49;
+      --moon: #f8f8f1;
+      --line: rgba(24, 35, 30, .13);
+      --line-dark: rgba(245, 243, 238, .2);
+      --shadow: 0 22px 60px rgba(25, 42, 34, .12);
+      --shadow-soft: 0 10px 30px rgba(25, 42, 34, .09);
+      --blur: 18px;
+      --radius-s: 10px;
+      --radius-m: 18px;
+      --radius-l: 28px;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+      --t-fast: 180ms;
+      --t: 420ms;
+      --t-slow: 720ms;
+      --space-1: 6px;
+      --space-2: 10px;
+      --space-3: 14px;
+      --space-4: 20px;
+      --space-5: 28px;
+      --space-6: 40px;
+      --space-7: 64px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--paper); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      z-index: 20;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      mix-blend-mode: multiply;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    /* ==================== Shared controls ==================== */
+    .eyebrow { margin: 0 0 8px; color: var(--amber); font: 600 11px/1.2 Inter, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+    h1, h2, h3, h4, p { margin-top: 0; }
+    h1, h2, h3 { font-family: "Songti SC", "STSong", "Noto Serif SC", serif; font-weight: 500; letter-spacing: .02em; }
+    h1 { font-size: clamp(40px, 7vw, 88px); line-height: .98; }
+    h2 { font-size: clamp(28px, 4vw, 48px); line-height: 1.16; }
+    h3 { font-size: clamp(21px, 2vw, 28px); line-height: 1.25; }
+    .muted { color: var(--ink-soft); }
+    .icon { width: 18px; height: 18px; flex: 0 0 18px; }
+    .btn {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 10px 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform var(--t-fast) var(--ease), background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+      text-decoration: none;
+      color: var(--ink);
+      background: transparent;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { color: var(--paper); background: var(--moss-deep); box-shadow: 0 9px 20px rgba(28, 52, 43, .18); }
+    .btn-primary:hover { background: var(--moss); }
+    .btn-ghost { color: var(--ink-soft); border-color: var(--line); background: rgba(255,255,255,.35); }
+    .btn-ghost:hover { border-color: var(--moss); color: var(--moss-deep); }
+    .btn-icon { width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: rgba(250,249,244,.75); display: inline-grid; place-items: center; transition: all var(--t-fast) var(--ease); }
+    .btn-icon:hover { transform: translateY(-2px); border-color: var(--moss); }
+    .btn-icon.is-active { color: var(--rose); border-color: currentColor; background: rgba(169,105,105,.08); }
+    .tag { display: inline-flex; align-items: center; min-height: 32px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); font-size: 12px; white-space: nowrap; }
+    .tag.is-active { color: var(--paper); border-color: var(--moss-deep); background: var(--moss-deep); }
+    .divider { height: 1px; background: var(--line); }
+
+    /* ==================== Hero garden ==================== */
+    .hero {
+      position: relative;
+      min-height: 760px;
+      height: min(100svh, 900px);
+      color: var(--paper);
+      background: #18362d;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .hero::before, .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+    .hero::before { z-index: -3; background: radial-gradient(circle at 72% 14%, rgba(219, 202, 154, .35), transparent 34%), linear-gradient(145deg, #1b382f 0%, #2b4d3d 44%, #738875 100%); }
+    .hero::after { z-index: -1; background: linear-gradient(180deg, rgba(12, 23, 18, .45) 0%, transparent 38%, rgba(12, 23, 18, .72) 100%); }
+    .hero-stage { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
+    .hill { position: absolute; left: -10%; width: 120%; border-radius: 50% 50% 0 0; filter: blur(.3px); transform: translateY(calc(var(--scroll-progress, 0) * 16px)); transition: transform 500ms var(--ease); }
+    .hill.one { bottom: -18%; height: 51%; background: #18362d; }
+    .hill.two { bottom: -29%; height: 57%; background: #244638; opacity: .75; transform: translateY(calc(var(--scroll-progress, 0) * 10px)); }
+    .hill.three { bottom: -40%; height: 64%; background: #355544; opacity: .7; transform: translateY(calc(var(--scroll-progress, 0) * 5px)); }
+    .sun { position: absolute; width: 160px; height: 160px; right: 16%; top: 17%; border-radius: 50%; background: radial-gradient(circle at 36% 34%, #fff9dc, #e1bf83 64%, rgba(225,191,131,.05) 70%); box-shadow: 0 0 70px rgba(231, 204, 140, .42); opacity: .85; }
+    .mist { position: absolute; left: -20%; right: -20%; height: 20%; border-radius: 50%; background: rgba(221, 233, 222, .16); filter: blur(30px); animation: mist-drift 14s ease-in-out infinite alternate; }
+    .mist.m1 { bottom: 30%; }
+    .mist.m2 { bottom: 16%; animation-delay: -5s; opacity: .65; }
+    @keyframes mist-drift { from { transform: translateX(-3%) scale(1); } to { transform: translateX(5%) scale(1.08); } }
+    .hero-flower { position: absolute; bottom: 13%; width: 90px; height: 160px; transform-origin: bottom center; opacity: .92; animation: stem-sway 7s ease-in-out infinite; }
+    .hero-flower::before { content: ""; position: absolute; bottom: 0; left: 50%; width: 2px; height: 110px; background: linear-gradient(#5e8b70, #244b38); transform: rotate(3deg); transform-origin: bottom; }
+    .hero-flower::after { content: ""; position: absolute; width: 48px; height: 48px; left: 22px; top: 8px; border-radius: 50%; background: radial-gradient(circle, #f9ead0 0 8%, #dca176 9% 17%, #9e5f5b 18% 32%, transparent 33%), conic-gradient(from 25deg, #bd7f79, #e4b39c, #9a5b60, #dba489, #bd7f79); filter: saturate(.78); box-shadow: 0 8px 20px rgba(5, 20, 12, .25); }
+    .hero-flower.f1 { left: 14%; transform: scale(.75); animation-delay: -1s; }
+    .hero-flower.f2 { left: 32%; transform: scale(1.05); animation-delay: -4s; }
+    .hero-flower.f3 { right: 23%; transform: scale(.68); animation-delay: -2.5s; }
+    .hero-flower.f4 { right: 6%; transform: scale(.9); animation-delay: -5s; }
+    @keyframes stem-sway { 0%,100% { rotate: -2deg; } 50% { rotate: 2deg; } }
+    .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: max(18px, env(safe-area-inset-top)) clamp(18px, 4vw, 56px) 18px; }
+    .brand { color: var(--paper); text-decoration: none; display: inline-flex; align-items: baseline; gap: 9px; }
+    .brand strong { font-family: "Songti SC", serif; font-size: 21px; font-weight: 500; letter-spacing: .16em; }
+    .brand small { color: rgba(245,243,238,.65); font: 11px/1 Inter, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    .topnav { display: flex; align-items: center; gap: 6px; }
+    .topnav a { min-height: 44px; color: rgba(245,243,238,.78); text-decoration: none; padding: 10px 13px; border-radius: 999px; font-size: 13px; transition: color var(--t-fast), background var(--t-fast); }
+    .topnav a:hover, .topnav a[aria-current="page"] { color: var(--paper); background: rgba(245,243,238,.13); }
+    .hero-copy { position: absolute; z-index: 2; left: clamp(22px, 8vw, 130px); right: 20px; bottom: clamp(150px, 20vh, 200px); max-width: 740px; }
+    .hero-copy h1 { margin-bottom: 20px; text-shadow: 0 4px 30px rgba(8,20,13,.25); }
+    .hero-copy p { max-width: 470px; color: rgba(245,243,238,.78); font-size: clamp(14px, 2vw, 17px); line-height: 1.9; }
+    .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; }
+    .hero .btn-primary { color: var(--ink); background: var(--paper); }
+    .hero .btn-ghost { color: var(--paper); border-color: rgba(245,243,238,.32); background: rgba(245,243,238,.08); }
+    .season-switch { position: absolute; z-index: 3; right: clamp(18px, 4vw, 56px); bottom: 28px; display: flex; gap: 7px; padding: 5px; border: 1px solid rgba(245,243,238,.18); border-radius: 999px; background: rgba(17, 39, 30, .35); backdrop-filter: blur(12px); }
+    .season-switch button { min-width: 52px; min-height: 36px; border: 0; border-radius: 999px; color: rgba(245,243,238,.65); background: transparent; font-size: 12px; transition: all var(--t-fast) var(--ease); }
+    .season-switch button:hover, .season-switch button.is-active { color: var(--ink); background: var(--paper); }
+    .scroll-cue { position: absolute; z-index: 3; left: clamp(22px, 8vw, 130px); bottom: 31px; display: flex; align-items: center; gap: 12px; color: rgba(245,243,238,.65); font-size: 11px; letter-spacing: .12em; }
+    .scroll-cue span { display: block; width: 42px; height: 1px; background: currentColor; }
+
+    /* ==================== Main content ==================== */
+    main { position: relative; z-index: 1; background: var(--paper); }
+    .section { width: min(1240px, 100%); margin: 0 auto; padding: clamp(70px, 9vw, 130px) clamp(18px, 5vw, 60px); }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    .section-head h2 { margin-bottom: 0; }
+    .section-head p { max-width: 390px; margin-bottom: 0; color: var(--ink-soft); font-size: 14px; }
+    .daily-wrap { display: grid; grid-template-columns: 1.04fr .96fr; gap: clamp(24px, 5vw, 70px); align-items: center; }
+    .daily-art { position: relative; min-height: 420px; border-radius: var(--radius-l); overflow: hidden; background: radial-gradient(circle at 55% 25%, #f5decc, transparent 39%), linear-gradient(150deg, #d2dcd0, #8ca994); box-shadow: var(--shadow); }
+    .daily-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(30,54,42,.35)); }
+    .daily-art .art-caption { position: absolute; z-index: 1; left: 24px; bottom: 20px; color: var(--moon); }
+    .daily-art .art-caption strong { display: block; font-family: "Songti SC", serif; font-size: 24px; font-weight: 500; }
+    .daily-flower { position: absolute; left: 50%; top: 50%; width: 230px; height: 230px; transform: translate(-50%, -55%); filter: drop-shadow(0 26px 20px rgba(45, 63, 43, .3)); }
+    .daily-copy blockquote { margin: 22px 0 28px; padding-left: 20px; border-left: 2px solid var(--rose); font-family: "Songti SC", serif; font-size: clamp(23px, 3vw, 34px); line-height: 1.45; }
+    .daily-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+
+    .explore-section { background: linear-gradient(180deg, var(--paper) 0%, #eef0ea 100%); }
+    .explore-shell { display: grid; grid-template-columns: 235px 1fr; gap: 34px; align-items: start; }
+    .filters { position: sticky; top: 20px; display: grid; gap: 22px; }
+    .filter-group { display: grid; gap: 10px; }
+    .filter-group h4 { margin: 0; font-size: 12px; color: var(--ink-soft); font-weight: 600; letter-spacing: .08em; }
+    .filter-options { display: flex; flex-wrap: wrap; gap: 7px; }
+    .filter-options button { min-height: 36px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; color: var(--ink-soft); background: rgba(255,255,255,.36); font-size: 12px; transition: all var(--t-fast) var(--ease); }
+    .filter-options button:hover, .filter-options button.is-active { color: var(--paper); border-color: var(--moss-deep); background: var(--moss-deep); }
+    .results-panel { min-width: 0; }
+    .search-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .search-box { position: relative; flex: 1; }
+    .search-box .icon { position: absolute; left: 15px; top: 50%; color: var(--ink-soft); transform: translateY(-50%); }
+    .search-box input { width: 100%; min-height: 52px; border: 1px solid var(--line); border-radius: 999px; padding: 10px 18px 10px 45px; color: var(--ink); background: rgba(255,255,255,.72); }
+    .search-box input::placeholder { color: #758078; }
+    .search-box input:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 4px rgba(54,84,72,.1); }
+    .view-switch { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.5); }
+    .view-switch button { min-width: 42px; min-height: 40px; border: 0; border-radius: 999px; color: var(--ink-soft); background: transparent; font-size: 12px; }
+    .view-switch button.is-active { color: var(--paper); background: var(--moss-deep); }
+    .result-status { min-height: 22px; color: var(--ink-soft); font-size: 13px; }
+    .flower-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .flower-card { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 310px; border: 1px solid rgba(24,35,30,.1); border-radius: var(--radius-m); background: rgba(255,255,255,.72); box-shadow: 0 8px 25px rgba(31, 49, 39, .05); cursor: pointer; transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease), border-color var(--t) var(--ease); animation: card-in var(--t-slow) var(--ease) both; }
+    .flower-card:hover, .flower-card:focus-within { transform: translateY(-7px); border-color: rgba(54,84,72,.35); box-shadow: var(--shadow-soft); }
+    @keyframes card-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .flower-card-art { position: relative; min-height: 184px; overflow: hidden; display: grid; place-items: center; background: var(--card-bg, #dde5da); }
+    .flower-card-art::after { content: ""; position: absolute; inset: auto 0 0; height: 45%; background: linear-gradient(transparent, rgba(20,34,27,.22)); }
+    .flower-card-art svg { width: 138px; height: 138px; transition: transform var(--t) var(--ease); }
+    .flower-card:hover .flower-card-art svg { transform: scale(1.09) rotate(-3deg); }
+    .flower-card-body { flex: 1; display: grid; gap: 6px; padding: 15px 16px 17px; }
+    .flower-card-name { display: flex; justify-content: space-between; gap: 9px; align-items: center; }
+    .flower-card-name h3 { margin: 0; font-size: 20px; }
+    .flower-card-name small { color: var(--ink-soft); font-size: 11px; }
+    .flower-card-meaning { margin: 0; color: var(--ink-soft); font-size: 13px; }
+    .flower-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+    .flower-card-footer .tag { min-height: 26px; padding: 4px 9px; font-size: 11px; }
+    .flower-card-fav { position: absolute; z-index: 2; top: 12px; right: 12px; width: 34px; height: 34px; border: 0; border-radius: 50%; color: var(--ink-soft); background: rgba(250,249,244,.75); display: grid; place-items: center; }
+    .flower-card-fav.is-active { color: var(--rose); }
+    .empty-state { display: grid; place-items: center; min-height: 270px; border: 1px dashed var(--line); border-radius: var(--radius-m); text-align: center; padding: 30px; }
+    .empty-state h3 { margin-bottom: 8px; }
+    .timeline-view, .map-view { display: none; min-height: 360px; border: 1px solid var(--line); border-radius: var(--radius-m); padding: 26px; background: rgba(255,255,255,.45); }
+    .timeline-view.is-visible, .map-view.is-visible { display: block; }
+    .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: end; min-height: 250px; }
+    .timeline-col { display: grid; gap: 7px; justify-items: center; }
+    .timeline-bar { width: 100%; max-width: 110px; height: var(--h); border-radius: 999px 999px 10px 10px; background: linear-gradient(180deg, #c9a477, #7f9b85); opacity: .78; }
+    .timeline-col strong { font-family: "Songti SC", serif; font-weight: 500; }
+    .map-art { position: relative; min-height: 260px; border-radius: 14px; overflow: hidden; background: linear-gradient(155deg, #e4eadc, #c9d7c7); }
+    .map-art::before { content: "江南 · 西南 · 北方 · 海岛"; position: absolute; inset: 20px; border: 1px dashed rgba(54,84,72,.35); border-radius: 48% 52% 44% 56%; color: rgba(54,84,72,.55); display: grid; place-items: center; font-family: "Songti SC", serif; letter-spacing: .25em; }
+    .map-pin { position: absolute; width: 11px; height: 11px; border: 3px solid var(--paper); border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 5px rgba(169,105,105,.2); }
+
+    .mood-section { background: var(--moss-deep); color: var(--paper); }
+    .mood-section .muted { color: rgba(245,243,238,.64); }
+    .mood-layout { display: grid; grid-template-columns: .82fr 1.18fr; gap: clamp(30px, 7vw, 100px); align-items: center; }
+    .mood-chips { display: flex; flex-wrap: wrap; gap: 9px; }
+    .mood-chip { min-height: 48px; padding: 10px 16px; border: 1px solid rgba(245,243,238,.25); border-radius: 999px; color: rgba(245,243,238,.78); background: transparent; transition: all var(--t-fast) var(--ease); }
+    .mood-chip:hover, .mood-chip.is-active { color: var(--ink); border-color: var(--paper); background: var(--paper); }
+    .mood-result { min-height: 280px; padding: 26px; border: 1px solid rgba(245,243,238,.18); border-radius: var(--radius-l); background: linear-gradient(140deg, rgba(245,243,238,.1), rgba(245,243,238,.03)); }
+    .mood-result-card { display: grid; grid-template-columns: 170px 1fr; gap: 24px; align-items: center; }
+    .mood-result-art { min-height: 190px; border-radius: var(--radius-m); display: grid; place-items: center; background: rgba(245,243,238,.12); }
+    .mood-result-art svg { width: 130px; height: 130px; }
+    .mood-result h3 { margin-bottom: 8px; }
+    .mood-result p { color: rgba(245,243,238,.7); }
+    .mood-result .tag { border-color: rgba(245,243,238,.25); color: rgba(245,243,238,.72); }
+
+    .footer { padding: 34px clamp(18px, 5vw, 60px) calc(34px + env(safe-area-inset-bottom)); color: rgba(245,243,238,.7); background: #13271f; }
+    .footer-inner { width: min(1240px, 100%); margin: 0 auto; display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-size: 12px; }
+    .footer a { color: inherit; }
+
+    /* ==================== Detail drawer ==================== */
+    .backdrop { position: fixed; z-index: 30; inset: 0; background: rgba(11, 24, 18, .48); opacity: 0; pointer-events: none; transition: opacity var(--t) var(--ease); }
+    .backdrop.is-visible { opacity: 1; pointer-events: auto; }
+    .detail-drawer { position: fixed; z-index: 31; inset: 0 0 0 auto; width: min(620px, 100%); overflow-y: auto; overscroll-behavior: contain; padding: max(16px, env(safe-area-inset-top)) clamp(18px, 4vw, 42px) calc(28px + env(safe-area-inset-bottom)); color: var(--ink); background: var(--paper); transform: translateX(100%); transition: transform var(--t-slow) var(--ease); box-shadow: -30px 0 80px rgba(10, 28, 18, .2); }
+    .detail-drawer.is-open { transform: translateX(0); }
+    .detail-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .detail-top .eyebrow { margin: 0; }
+    .detail-art { min-height: 280px; border-radius: var(--radius-l); display: grid; place-items: center; overflow: hidden; background: var(--detail-bg, #dde5da); }
+    .detail-art svg { width: min(260px, 65vw); height: min(260px, 65vw); cursor: grab; transition: transform var(--t) var(--ease); }
+    .detail-art svg.is-dragging { cursor: grabbing; transition: none; }
+    .detail-title-row { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-top: 26px; }
+    .detail-title-row h2 { margin: 0 0 6px; }
+    .detail-title-row p { margin: 0; color: var(--ink-soft); font-size: 13px; }
+    .meaning-lead { margin: 22px 0; padding: 18px 20px; border-left: 2px solid var(--rose); background: rgba(169,105,105,.07); font-family: "Songti SC", serif; font-size: 23px; line-height: 1.5; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px 24px; margin: 24px 0; }
+    .detail-block h4 { margin: 0 0 5px; color: var(--ink-soft); font-size: 11px; letter-spacing: .1em; }
+    .detail-block p { margin: 0; font-size: 14px; }
+    .quote { margin: 24px 0; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-family: "Songti SC", serif; font-size: 18px; }
+    .quote cite { display: block; margin-top: 8px; color: var(--ink-soft); font: 12px Inter, sans-serif; }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .detail-section-title { margin: 30px 0 12px; font-family: "Songti SC", serif; font-size: 20px; }
+    .similar-list { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 7px; }
+    .similar-item { flex: 0 0 132px; min-height: 104px; border: 1px solid var(--line); border-radius: 14px; padding: 11px; text-align: left; background: rgba(255,255,255,.5); }
+    .similar-item svg { width: 56px; height: 56px; float: right; }
+    .similar-item strong { display: block; padding-top: 10px; font-family: "Songti SC", serif; font-weight: 500; }
+
+    /* ==================== Modals & mobile nav ==================== */
+    .modal { position: fixed; z-index: 40; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(11,24,18,.48); opacity: 0; pointer-events: none; transition: opacity var(--t) var(--ease); }
+    .modal.is-open { opacity: 1; pointer-events: auto; }
+    .modal-card { width: min(580px, 100%); max-height: min(760px, 92svh); overflow: auto; border-radius: var(--radius-l); padding: clamp(22px, 4vw, 36px); background: var(--paper); box-shadow: var(--shadow); transform: translateY(16px) scale(.98); transition: transform var(--t) var(--ease); }
+    .modal.is-open .modal-card { transform: translateY(0) scale(1); }
+    .modal-head { display: flex; justify-content: space-between; align-items: start; gap: 20px; }
+    .modal-head h2 { margin-bottom: 6px; }
+    .form-grid { display: grid; gap: 14px; margin-top: 22px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: var(--ink-soft); font-size: 12px; }
+    .field input, .field textarea, .field select { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--ink); background: rgba(255,255,255,.7); }
+    .field textarea { min-height: 110px; resize: vertical; }
+    .bouquet-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .bouquet-picks button { display: grid; place-items: center; width: 70px; min-height: 70px; border: 1px solid var(--line); border-radius: 13px; color: var(--ink); background: rgba(255,255,255,.5); }
+    .bouquet-picks button svg { width: 42px; height: 42px; }
+    .bouquet-picks button.is-active { border-color: var(--moss); box-shadow: inset 0 0 0 2px var(--moss); }
+    .bottom-nav { display: none; }
+    .toast { position: fixed; z-index: 60; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); max-width: calc(100% - 36px); padding: 11px 16px; border-radius: 999px; color: var(--paper); background: var(--moss-deep); box-shadow: var(--shadow-soft); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; transition: all var(--t) var(--ease); font-size: 13px; }
+    .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+    #particleCanvas { position: fixed; z-index: 0; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+    @media (max-width: 900px) {
+      .hero { min-height: 720px; }
+      .topnav a:nth-child(n+2) { display: none; }
+      .daily-wrap, .mood-layout { grid-template-columns: 1fr; }
+      .daily-art { min-height: 320px; }
+      .explore-shell { grid-template-columns: 1fr; }
+      .filters { position: static; display: flex; align-items: start; gap: 14px; overflow-x: auto; padding-bottom: 5px; }
+      .filter-group { min-width: max-content; }
+      .filter-group h4 { display: none; }
+      .filter-options { flex-wrap: nowrap; }
+      .flower-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .hero { min-height: 680px; height: 90svh; }
+      .hero-copy { bottom: 150px; }
+      .hero-copy h1 { font-size: clamp(42px, 14vw, 68px); }
+      .hero-copy p { font-size: 14px; }
+      .hero-flower { bottom: 13%; }
+      .hero-flower.f1 { left: 2%; }
+      .hero-flower.f2 { left: 26%; }
+      .hero-flower.f3 { right: 28%; }
+      .hero-flower.f4 { right: -8%; }
+      .season-switch { left: 18px; right: auto; bottom: 25px; }
+      .scroll-cue { display: none; }
+      .topbar { padding-left: 18px; padding-right: 14px; }
+      .brand small { display: none; }
+      .section { padding-top: 72px; padding-bottom: 72px; }
+      .section-head { align-items: start; flex-direction: column; }
+      .section-head p { max-width: 100%; }
+      .flower-grid { gap: 10px; }
+      .flower-card { min-height: 290px; }
+      .flower-card-art { min-height: 150px; }
+      .flower-card-art svg { width: 112px; height: 112px; }
+      .flower-card-body { padding: 12px; }
+      .flower-card-name h3 { font-size: 18px; }
+      .flower-card-name small { display: none; }
+      .view-switch { display: none; }
+      .mood-result { padding: 16px; }
+      .mood-result-card { grid-template-columns: 100px 1fr; gap: 14px; }
+      .mood-result-art { min-height: 120px; }
+      .mood-result-art svg { width: 84px; height: 84px; }
+      .detail-drawer { width: 100%; inset: auto 0 0; max-height: 94svh; border-radius: 24px 24px 0 0; transform: translateY(100%); }
+      .detail-drawer.is-open { transform: translateY(0); }
+      .detail-art { min-height: 230px; }
+      .detail-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+      .bottom-nav { position: fixed; z-index: 25; left: 12px; right: 12px; bottom: max(10px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(4, 1fr); min-height: 58px; padding: 5px; border: 1px solid rgba(24,35,30,.12); border-radius: 18px; background: rgba(245,243,238,.84); backdrop-filter: blur(18px); box-shadow: var(--shadow-soft); }
+      .bottom-nav button { border: 0; border-radius: 13px; color: var(--ink-soft); background: transparent; display: grid; place-items: center; gap: 2px; font-size: 10px; }
+      .bottom-nav button.is-active { color: var(--moss-deep); background: rgba(54,84,72,.11); }
+      .bottom-nav .icon { width: 17px; height: 17px; }
+      .footer { padding-bottom: 100px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+      #particleCanvas { display: none; }
+    }
+    @media (update: slow) {
+      #particleCanvas { display: none; }
+      .mist { animation: none; }
+    }
+  /* Final theme — restrained botanical plates and accessible interaction. */
+@property --scene-top { syntax:'<color>';inherits:true;initial-value:#172e24; }
+@property --scene-bottom { syntax:'<color>';inherits:true;initial-value:#6d7960; }
+:root { --font-title: 'Songti SC','SimSun','STSong',serif; --font-body: 'PingFang SC','Microsoft YaHei',sans-serif; --text-xs:12px; --text-sm:14px; --text-base:16px; --text-title:clamp(30px,4vw,52px); --z-scene:0; --z-content:2; --z-nav:25; --z-drawer:31; --z-modal:40; --z-toast:60; }
+[hidden] { display:none !important; }
+button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+button { touch-action:manipulation; }
+.skip-link { position:fixed;top:-100px;left:20px;z-index:99;padding:12px;background:var(--paper);color:var(--ink); }
+.skip-link:focus { top:12px; }
+.hero { height:100svh;min-height:720px;--scene-top:#142a22;--scene-bottom:#6d7960;--scene-light:rgba(213,187,124,.27);transition:--scene-top 720ms ease,--scene-bottom 720ms ease; }
+.hero::before { background:radial-gradient(ellipse at 68% 42%,var(--scene-light),transparent 54%),linear-gradient(150deg,var(--scene-top),var(--scene-bottom));transition:background 800ms var(--ease); }
+.hero::after { background:linear-gradient(90deg,rgba(10,29,22,.48),transparent 72%),linear-gradient(0deg,rgba(11,29,22,.65),transparent 48%); }
+.topbar { border-bottom:1px solid rgba(240,240,228,.12);margin:0 clamp(20px,4vw,56px);padding-left:0;padding-right:0; }
+.brand { gap:14px;align-items:center; }
+.brand-mark { width:36px;height:42px;color:#c9b68a; }
+.brand strong { font-size:20px;letter-spacing:.14em; }
+.brand small { display:block;margin-top:6px;font-size:8px;letter-spacing:.21em; }
+.topnav { gap:12px; }
+.topnav a { font-size:13px; }
+.topnav .btn-icon { border-color:rgba(245,243,238,.25);color:var(--paper);background:transparent; }
+.nav-action { min-height:44px;border:0;background:none;color:rgba(245,243,238,.8);padding:8px 12px;font-size:13px; }
+.nav-action:hover { color:#e9cf9b; }
+.hero-copy { left:8%;bottom:24%;max-width:560px;right:51%; }
+.hero-copy h1 { font-size:clamp(52px,6.3vw,90px);line-height:1.3;letter-spacing:.13em;white-space:nowrap;font-style:normal;margin:24px 0; }
+.hero-copy h1 em { font-style:normal;color:#e2d3b1; }
+.hero-copy .eyebrow { font-size:10px;letter-spacing:.25em;color:#d6c6a1;margin-bottom:0; }
+.hero-copy p:not(.eyebrow) { max-width:340px;font-size:14px;line-height:2; }
+.hero-actions .btn { min-height:48px;font-size:13px;padding:11px 23px; }
+.hero-actions .btn-ghost { background:transparent; }
+.hero-botanical { position:absolute;right:-4%;bottom:2%;width:66%;height:88%;transform:translate(calc(var(--pointer-x,0) * 5px),calc(var(--pointer-y,0) * 3px));transition:transform 1s var(--ease); }
+.garden-bloom { position:absolute;border:0;background:none;color:var(--paper);padding:0;display:flex;align-items:center;justify-content:center;transform-origin:50% 95%;animation:botanical-breathe 9s ease-in-out infinite; }
+.garden-bloom svg { width:100%;height:100%;filter:drop-shadow(0 20px 18px rgba(0,0,0,.24));transition:filter .7s,scale .7s var(--ease); }
+.garden-bloom:hover svg,.garden-bloom:focus-visible svg { scale:1.025;filter:drop-shadow(0 12px 30px rgba(238,217,168,.13)); }
+.garden-bloom span { position:absolute;top:32%;right:8%;font:14px var(--font-title);padding:8px 15px;border:1px solid rgba(240,236,220,.4);background:rgba(20,40,31,.45);border-radius:30px;opacity:0;transition:opacity .4s; }
+.garden-bloom:hover span,.garden-bloom:focus-visible span { opacity:1; }
+.garden-bloom:nth-child(1) { left:8%;bottom:-9%;width:64%;height:105%; }
+.garden-bloom:nth-child(2) { right:-5%;bottom:-6%;width:46%;height:84%;animation-delay:-3s;rotate:14deg;opacity:.9; }
+.garden-bloom:nth-child(3) { left:-6%;bottom:-16%;width:40%;height:70%;animation-delay:-5s;rotate:-22deg;opacity:.72; }
+@keyframes botanical-breathe { 0%,100% { translate:0 0; } 50% { translate:3px -7px; } }
+.hero-stage .hero-flower { display:none; }
+.hero-stage .sun { width:290px;height:290px;right:23%;top:18%;opacity:.32;filter:blur(25px); }
+.hill { opacity:.26!important; }
+.hero-bottom { position:absolute;left:8%;right:5%;bottom:110px;display:flex;align-items:center;gap:16px;color:rgba(245,243,238,.6);font-size:10px;letter-spacing:.12em; }
+.hero-bottom::before { content:'';height:1px;width:35px;background:#b8c3ab; }
+.scene-caption { position:absolute;right:6%;bottom:150px;writing-mode:vertical-rl;letter-spacing:.35em;font:13px var(--font-title);color:#d3d7c4; }
+.season-switch { bottom:30px;right:6%;gap:4px;border-radius:4px;border-color:rgba(245,243,238,.15);background:none;backdrop-filter:none; }
+.season-switch button { min-height:44px;min-width:60px;border-radius:2px;font-size:12px; }
+.season-switch button.is-active { background:#d5c59f;color:#1c342b; }
+.scroll-cue { bottom:45px; }
+.season-index { margin-left:auto;font:italic 36px Georgia,serif;color:#c8ba94;letter-spacing:0; }
+.section { padding-top:86px;padding-bottom:86px; }
+.section-head h2 { font-size:36px; }
+.daily-art { min-height:370px;background:#d3dccb; }
+.daily-art .daily-flower { width:270px;height:350px;top:48%; }
+.daily-art svg { width:100%;height:100%; }
+.daily-art::before { content:'一日一花';position:absolute;left:30px;top:28px;writing-mode:vertical-rl;font:18px var(--font-title);letter-spacing:.4em;color:#54684f; }
+.daily-copy blockquote { font-size:30px; }
+.flower-card { min-height:350px;border-radius:6px;box-shadow:none; }
+.flower-card-art { min-height:230px;background:var(--card-bg); }
+.flower-card-art::after { display:none; }
+.flower-card-art svg { width:170px;height:228px; }
+.flower-card-fav { width:44px;height:44px;top:4px;right:4px;background:transparent;font-size:23px; }
+.flower-card-body { border-top:1px solid var(--line); }
+.flower-card-name button { padding:0;min-height:44px;min-width:44px;color:var(--ink);border:0;background:none;text-align:left; }
+.flower-card-name button::after { content:'';position:absolute;inset:0; }
+.flower-card-fav { z-index:2; }
+.filter-options button { min-height:44px; }
+.filters select { width:100%;min-height:44px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.45);padding:8px;color:var(--ink); }
+.filter-note { font-size:12px;line-height:1.8;margin-top:5px; }
+.reset-button { color:var(--moss);border:0;background:none;text-decoration:underline;min-height:44px;text-align:left;padding:0; }
+.result-status { color:#536255; }
+.view-switch button { min-height:44px;min-width:48px; }
+.mood-result-art svg { width:150px;height:205px; }
+.mood-result .tag { background:transparent;min-height:44px;cursor:pointer; }
+.mood-result .tag:hover { background:#f5f3ee;color:#18231e; }
+.journal-section { border-bottom:1px solid var(--line); }
+.journal-line { display:flex;gap:18px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:25px 0; }
+.journal-number { font:italic 28px Georgia,serif;color:#89734d;margin-right:16px; }
+.collection-empty { padding:26px;border:1px dashed var(--line);border-radius:14px;background:#f0efe8; }
+.collection-list { display:grid;grid-template-columns:repeat(4,1fr);gap:12px; }
+.collection-list button { padding:12px;border:1px solid var(--line);background:#e8eadd;border-radius:6px;text-align:left;min-height:80px; }
+.collection-list svg { width:64px;height:90px;float:right; }
+.collection-list strong { display:block;margin-top:12px;font-family:var(--font-title);font-size:20px; }
+.collection-list small { display:block; }
+.detail-drawer { visibility:hidden; }
+.detail-drawer.is-open { visibility:visible; }
+.detail-art { min-height:310px;perspective:800px; }
+.detail-art svg { width:240px;height:320px;touch-action:pan-y; }
+.detail-block { margin-bottom:20px; }
+.detail-grid .detail-block { margin:0; }
+.detail-block h4 { font-size:12px; }
+.detail-source { border-top:1px solid var(--line);padding-top:20px;font-size:12px;line-height:1.9;color:var(--ink-soft); }
+.detail-source a { color:var(--moss); }
+.detail-hint { font-size:11px;color:#59685d;margin:7px 0 0;text-align:center; }
+.meaning-description { font-size:14px;color:var(--ink-soft); }
+.modal { display:none; }
+.modal.is-open { display:grid; }
+.modal-card { max-height:calc(100dvh - 36px); }
+.detail-drawer { max-height:100dvh; }
+.about-source { padding:15px 0;border-bottom:1px solid var(--line);font-size:14px; }
+.about-source a { color:var(--moss); }
+.about-source small { display:block;color:var(--ink-soft);line-height:1.8;margin-top:5px; }
+.token-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:8px; }
+.swatch { height:28px;border:1px solid var(--line);border-radius:4px;margin-bottom:5px; }
+.token-grid span { font-size:11px; }
+.bouquet-picks button { width:72px;min-height:94px; }
+.bouquet-picks button svg { width:48px;height:65px; }
+.card-options { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.card-export { width:100%;height:auto;border-radius:8px;display:block; }
+.share-text { width:100%;min-height:135px;background:#edece3;color:var(--ink);border:1px solid var(--line);padding:15px;border-radius:12px; }
+.map-view,.timeline-view { min-height:320px;padding:20px; }
+.garden-map { position:relative;min-height:420px;border-radius:14px;background:radial-gradient(ellipse at 22% 25%,#bbccad 0,transparent 48%),linear-gradient(120deg,#e9e9d8,#ced9c2);overflow:hidden; }
+.garden-map::before { content:'';position:absolute;top:15%;left:40%;width:20%;height:78%;border:18px solid rgba(245,241,224,.8);border-radius:50%;rotate:32deg; }
+.map-caption { position:absolute;left:20px;top:16px;font:14px var(--font-title);color:#3e593e; }
+.garden-map button { position:absolute;border:0;border-radius:8px;background:rgba(247,246,236,.86);color:var(--ink);min-width:72px;min-height:48px;padding:6px;box-shadow:0 8px 24px #27482815; }
+.garden-map button:hover { background:#fffdf0; }
+.garden-map button svg { height:64px;width:55px;display:block;margin:auto; }
+.phenology { display:grid;gap:10px; }
+.phenology-row { display:grid;grid-template-columns:62px repeat(12,minmax(0,1fr));gap:3px;align-items:center;min-height:44px; }
+.phenology-row>button { border:0;background:none;padding:0;min-height:44px;font-size:13px;text-align:left;color:var(--ink); }
+.phenology-row span { height:12px;background:#e5e7dd;border-radius:4px;font-size:10px;text-align:center; }
+.phenology-row span.in-bloom { background:#78916c; }
+.phenology-row.heading span { background:none;height:auto; }
+.phenology-row.heading { min-height:25px; }
+.state-line { display:flex;align-items:center;flex-wrap:wrap;gap:14px;font-size:11px;color:#c4cfc3;margin-top:20px; }
+.state-line button { color:#c4cfc3;border:1px solid #728674;background:none;min-height:44px;padding:8px 13px;border-radius:5px; }
+#particleCanvas { z-index:21; }
+.toast { bottom:28px; }
+body.calm .mist,body.calm .garden-bloom { animation:none; }
+body.calm .hero-botanical { transform:none; }
+body.calm .detail-art svg { transform:none!important; }
+body.calm #particleCanvas { display:none; }
+body.calm { scroll-behavior:auto; }
+::view-transition-old(root),::view-transition-new(root) { animation-duration:400ms; }
+@media(min-width:1450px) { .hero-copy { bottom:27%; } }
+@media(max-width:1050px) { .topnav { gap:3px; } .topnav a,.nav-action { padding:8px; } .hero-copy { left:6%; } .hero-copy h1 { font-size:64px; } .hero-botanical { width:72%;right:-10%; } }
+@media(max-width:900px) { .topnav a { display:none; } .hero-copy { right:45%;bottom:26%; } .hero-copy h1 { font-size:60px; } .filters { gap:12px;flex-wrap:wrap;overflow:visible; } .filter-group { min-width:0; } .filter-note { display:none; } .filters select { width:135px; } .flower-card-art { min-height:250px; } .flower-card-art svg { height:245px; } .collection-list { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:600px) {
+  .hero { height:100svh;min-height:750px;max-height:1000px; }
+  .topbar { margin:0 18px;padding-top:max(17px,env(safe-area-inset-top)); }
+  .topnav .nav-action { display:none; }
+  .brand strong { font-size:19px; } .brand small { display:block;font-size:7px; }
+  .brand-mark { width:28px; }
+  .hero-copy { left:24px;right:24px;top:145px;bottom:auto;max-width:none; }
+  .hero-copy h1 { font-size:49px;line-height:1.3;letter-spacing:.13em;margin:20px 0 18px; }
+  .hero-copy p:not(.eyebrow) { max-width:265px;font-size:13px; }
+  .hero-actions { gap:8px;margin-top:22px; }
+  .hero-actions .btn { padding:10px 17px;font-size:12px; }
+  .hero-botanical { width:89%;height:51%;bottom:43px;right:-32%;opacity:.87; }
+  .garden-bloom:nth-child(1) { width:83%;left:-3%; }
+  .garden-bloom:nth-child(2) { width:53%;right:-4%; }
+  .garden-bloom:nth-child(3) { display:none; }
+  .hero-bottom { bottom:167px;left:25px;right:40%;font-size:8px;line-height:2;gap:8px; }
+  .season-index { font-size:29px; }
+  .scene-caption { bottom:206px;right:22px;font-size:11px; }
+  .season-switch { left:24px;bottom:99px;right:auto; }
+  .season-switch button { min-width:49px; }
+  .section { padding:65px 20px; }
+  .section-head h2 { font-size:30px; }
+  .daily-art { min-height:340px; }
+  .daily-art .daily-flower { width:245px;height:330px; }
+  .flower-grid { gap:12px; }
+  .flower-card { min-height:310px; }
+  .flower-card-art { min-height:202px; }
+  .flower-card-art svg { width:142px;height:195px; }
+  .flower-card-body { padding:10px 12px 14px; }
+  .flower-card-meaning { font-size:12px;line-height:1.6; }
+  .flower-card-footer .muted { display:none; }
+  .search-row { flex-wrap:wrap; }
+  .search-box { flex-basis:100%; }
+  .view-switch { display:flex; }
+  .view-switch button { min-width:55px; }
+  .filters { gap:10px; }
+  .filter-options { flex-wrap:wrap;gap:5px; }
+  .filter-options button { min-width:44px;padding:8px 11px; }
+  .filter-group { width:100%; }
+  .filter-group h4 { display:block;font-size:11px;margin-bottom:-3px; }
+  .filter-group:has(select) { width:calc(50% - 5px); }
+  .filters select { width:100%; }
+  .explore-shell { gap:20px; }
+  .mood-result-art svg { width:100px;height:145px; }
+  .mood-result-card { grid-template-columns:95px 1fr; }
+  .mood-result p { font-size:13px; }
+  .mood-result h3 { font-size:20px; }
+  .mood-result .eyebrow { font-size:9px; }
+  .detail-drawer { max-height:94dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom)); }
+  .detail-art { min-height:270px; }
+  .detail-art svg { width:210px;height:280px; }
+  .detail-top::before { content:'';position:absolute;width:34px;height:3px;background:#c6cbbf;top:8px;left:calc(50% - 17px);border-radius:4px; }
+  .journal-line { align-items:flex-start; }
+  .journal-line h3 { font-size:22px; }
+  .journal-number { font-size:23px; }
+  .journal-line p { font-size:12px; }
+  .journal-line .btn { white-space:nowrap;padding:10px 13px;font-size:12px; }
+  .garden-map { min-height:460px; }
+  .garden-map button { min-width:64px; }
+  .map-view,.timeline-view { padding:12px; }
+  .toast { bottom:calc(87px + env(safe-area-inset-bottom));border-radius:12px;width:max-content;max-width:calc(100% - 40px);text-align:center; }
+  .collection-list { gap:10px; }
+  .phenology-row { grid-template-columns:52px repeat(12,minmax(0,1fr));gap:2px; }
+  .phenology-row>button { font-size:11px; }
+}
+@media(prefers-reduced-motion:reduce) { .hero-botanical { transform:none; } .detail-art svg { transform:none!important; } ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*) { animation:none!important; } }
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#explore">跳到花语搜索</a>
+<noscript><p style="padding:24px">请启用 JavaScript 以使用搜索、图鉴与花束编辑器。花园内容均内嵌在本页中。</p></noscript>
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+  <header class="hero" id="home">
+    <div class="hero-stage" aria-hidden="true">
+      <div class="sun"></div><div class="mist m1"></div><div class="mist m2"></div>
+      <div class="hill three"></div><div class="hill two"></div><div class="hill one"></div>
+      <div class="hero-flower f1"></div><div class="hero-flower f2"></div><div class="hero-flower f3"></div><div class="hero-flower f4"></div>
+    </div>
+    <div class="topbar">
+      <a class="brand" href="#home" aria-label="花语秘境首页"><svg class="brand-mark" viewBox="0 0 36 44" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1"><path d="M18 40V20M18 32Q2 31 4 18Q18 17 18 32M18 27Q33 23 30 12Q17 14 18 27M18 21Q6 8 18 2Q30 8 18 21Z"/></svg><span><strong>花语秘境</strong><small>THE GARDEN OF MEANINGS</small></span></a>
+      <nav class="topnav" aria-label="主导航">
+        <a href="#explore" aria-current="page">探索花园</a><a href="#mood">情绪匹配</a><a href="#daily">每日一花</a>
+        <button class="nav-action" data-bouquet-open>制一束花</button><a href="#collection">我的图鉴</a><button class="btn-icon" id="audioToggle" aria-pressed="false" aria-label="开启环境音" title="环境音（默认关闭）"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10v4h3l4 3V7l-4 3H4Z"/><path d="M16 9.5c1.7 1.4 1.7 3.6 0 5M19 7c3.2 2.8 3.2 7.2 0 10"/></svg></button>
+      </nav>
+    </div>
+    <div class="hero-botanical" id="heroBotanical"></div><div class="scene-caption">万物有时 · 花开有意</div><div class="hero-bottom"><span id="seasonLabel">春生 · 风把花信送来</span><span id="seasonIndex" class="season-index">01</span></div><div class="hero-copy">
+      <p class="eyebrow">01 / FOUR SEASONS · ENDLESS STORIES</p>
+      <h1>花开有时，<br><em>心意有声。</em></h1>
+      <p>一座可以慢慢走的四季花园。<br>让未曾说出口的心意，在这里找到花期。</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="#explore">进入花园 <span aria-hidden="true">↗</span></a><button class="btn btn-ghost" id="randomFlower">随机遇见一朵</button></div>
+    </div>
+    <div class="scroll-cue" aria-hidden="true"><span></span>向下漫步</div>
+    <div class="season-switch" role="group" aria-label="选择花园季节"><button class="is-active" data-season="spring">春</button><button data-season="summer">夏</button><button data-season="autumn">秋</button><button data-season="winter">冬</button></div>
+  </header>
+
+  <main>
+    <section class="section" id="daily" aria-labelledby="dailyTitle">
+      <div class="section-head"><div><p class="eyebrow">Today in the garden</p><h2 id="dailyTitle">今日花语签</h2></div><p>每天一朵花，一句恰好抵达心里的话。收藏它，或把它分享给正在想念的人。</p></div>
+      <div class="daily-wrap">
+        <div class="daily-art" id="dailyArt"><div class="daily-flower" id="dailyFlower"></div><div class="art-caption"><small id="dailyDate">每日一花</small><strong id="dailyName">木槿</strong></div></div>
+        <div class="daily-copy"><div class="daily-meta" id="dailyMeta"></div><blockquote id="dailyQuote">温柔地坚持，今天也会开成自己的样子。</blockquote><p id="dailyMeaning" class="muted">木槿朝开暮落，却日日不绝。它把短暂活成了绵延，是温柔而坚定的自我更新。</p><div class="hero-actions"><button class="btn btn-primary" id="dailyDetail">查看花语</button><button class="btn btn-ghost" id="dailySave">收藏</button><button class="btn btn-ghost" id="dailyShare">分享</button><button class="btn btn-ghost" id="dailyCard">制成花卡</button></div></div>
+      </div>
+    </section>
+
+    <section class="section explore-section" id="explore" aria-busy="true" aria-labelledby="exploreTitle">
+      <div class="section-head"><div><p class="eyebrow">Walk, search, discover</p><h2 id="exploreTitle">探索花园</h2></div><p>用一场搜索，穿过颜色、季节与心意。每张卡片都藏着花的来处。</p></div>
+      <div class="explore-shell">
+        <aside class="filters" aria-label="筛选条件">
+          <div class="filter-group"><h4>季节</h4><div class="filter-options" data-filter-group="season"><button class="is-active" data-value="all">全部</button><button data-value="春">春</button><button data-value="夏">夏</button><button data-value="秋">秋</button><button data-value="冬">冬</button></div></div>
+          <div class="filter-group"><h4>颜色</h4><div class="filter-options" data-filter-group="color"><button class="is-active" data-value="all">全部</button><button data-value="红">红</button><button data-value="白">白</button><button data-value="黄">黄</button><button data-value="蓝紫">蓝紫</button></div></div>
+          <div class="filter-group"><h4>场合</h4><div class="filter-options" data-filter-group="occasion"><button class="is-active" data-value="all">全部</button><button data-value="告白">告白</button><button data-value="祝福">祝福</button><button data-value="思念">思念</button></div></div>
+<div class="filter-group"><label for="audienceFilter"><h4>送给谁</h4></label><select id="audienceFilter"><option value="all">所有对象</option><option>自己</option><option>朋友</option><option>伴侣</option><option>长辈</option></select></div><div class="filter-group"><label for="tagFilter"><h4>花语标签</h4></label><select id="tagFilter"><option value="all">所有心意</option><option>治愈</option><option>思念</option><option>勇敢</option><option>祝福</option><option>清醒</option></select></div><button class="reset-button" id="clearAllFilters">清空筛选</button><p class="filter-note">花语随文化而不同。<br>读花的故事，也记得听收花人的心意。</p></aside><div class="results-panel">
+          <div class="search-row"><div class="search-box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6.8"/><path d="m16 16 4 4"/></svg><label class="sr-only" for="searchInput">搜索花名或花语</label><input id="searchInput" type="search" placeholder="搜索花名、花语、心意…" autocomplete="off"></div><div class="view-switch" role="group" aria-label="结果视图"><button class="is-active" data-view="grid" aria-label="网格视图">图鉴</button><button data-view="map" aria-label="地图视图">花园</button><button data-view="timeline" aria-label="时间轴视图">花期</button></div></div>
+          <p class="result-status" id="resultStatus" role="status" aria-live="polite">正在整理花园…</p>
+          <div class="flower-grid" id="flowerGrid"></div>
+          <div class="map-view" id="mapView"><div class="map-art"><span class="map-pin" style="left:27%;top:42%"></span><span class="map-pin" style="left:67%;top:31%"></span><span class="map-pin" style="left:49%;top:68%"></span></div><p class="muted" style="margin:14px 0 0;font-size:13px">花的产地像一张缓慢展开的地图。选择花朵，查看它从哪里来。</p></div>
+          <div class="timeline-view" id="timelineView"><div class="timeline"><div class="timeline-col"><div class="timeline-bar" style="--h:130px"></div><strong>春</strong><small class="muted">3–5月</small></div><div class="timeline-col"><div class="timeline-bar" style="--h:205px"></div><strong>夏</strong><small class="muted">6–8月</small></div><div class="timeline-col"><div class="timeline-bar" style="--h:165px"></div><strong>秋</strong><small class="muted">9–11月</small></div><div class="timeline-col"><div class="timeline-bar" style="--h:90px"></div><strong>冬</strong><small class="muted">12–2月</small></div></div><p class="muted" style="margin:14px 0 0;font-size:13px">花期会因地区与气候而不同，这里提供一份温柔的索引。</p></div>
+          <div class="empty-state" id="emptyState" hidden><div><h3>还没有遇见这朵花</h3><p class="muted">换一个关键词，或放宽筛选条件试试。</p><button class="btn btn-ghost" id="resetFilters">清空筛选</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section mood-section" id="mood" aria-labelledby="moodTitle">
+      <div class="mood-layout"><div><p class="eyebrow">A feeling, a flower</p><h2 id="moodTitle">把心情交给花</h2><p class="muted">选择此刻最接近你的心情，花园会给你一枚柔软的回答。</p><div class="mood-chips" id="moodChips"><button class="mood-chip is-active" data-mood="思念">思念</button><button class="mood-chip" data-mood="焦虑">焦虑</button><button class="mood-chip" data-mood="暗恋">暗恋</button><button class="mood-chip" data-mood="歉意">歉意</button><button class="mood-chip" data-mood="祝福">祝福</button></div></div><div class="mood-result" id="moodResult" aria-live="polite"></div></div>
+    </section>
+<section class="section journal-section" id="collection" aria-labelledby="collectionTitle"><div class="section-head"><div><p class="eyebrow">Your garden journal</p><h2 id="collectionTitle">把相遇，收进图鉴</h2></div><p id="collectionCount"></p></div><div id="collectionList"></div><p class="filter-note" id="bloomReminders"></p><div class="journal-line" style="margin-top:30px"><div><h3><span class="journal-number">✳</span>选几朵花，寄一份心意。</h3><p class="muted" style="margin:0">自由选花、配色与包装，写下只属于你们的话。</p></div><button class="btn btn-primary" data-bouquet-open>开始制花 ↗</button></div></section></main>
+
+  <footer class="footer"><div class="footer-inner"><span>花语秘境 · 四季花园</span><span>原创植物插画 · 历史花语与东方诗意 · 各条目附来源</span><a href="#about" id="aboutLink">关于、来源与设计系统</a><div class="state-line"><span id="networkStatus"></span><span id="motionStatus"></span><button id="motionToggle" aria-pressed="false">切换静谧模式</button></div></div></footer>
+
+  <nav class="bottom-nav" aria-label="移动端导航"><button class="is-active" data-scroll="#home"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m4 11 8-7 8 7v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8Z"/><path d="M9 20v-6h6v6"/></svg>首页</button><button data-scroll="#explore"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6.8"/><path d="m16 16 4 4"/></svg>探索</button><button data-scroll="#mood"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20S4 15.8 4 9.4A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8 2.4C20 15.8 12 20 12 20Z"/></svg>心情</button><button id="openBouquet"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 21-7-9a7 7 0 1 1 14 0l-7 9Z"/><path d="M8 5c1-2 5-2 6 0"/></svg>花束</button></nav>
+
+  <div class="backdrop" id="backdrop"></div>
+  <aside class="detail-drawer" id="detailDrawer" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="detailTitle"><div class="detail-top"><p class="eyebrow">Flower note</p><button class="btn-icon" id="closeDetail" aria-label="关闭花语详情">×</button></div><div class="detail-art" id="detailArt"></div><p id="detailHint" class="detail-hint"></p><div class="detail-title-row"><div><h2 id="detailTitle">木槿</h2><p id="detailLatin">Hibiscus syriacus · 锦葵科</p></div><button class="btn-icon" id="detailFav" aria-label="收藏这朵花"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.4-8.8 10.3-8.8 10.3S3.2 14.2 3.2 8.8A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8.8 1.8Z"/></svg></button></div><div class="meaning-lead" id="detailMeaning">温柔的坚持 · 新的开始</div><p id="detailDescription" class="meaning-description"></p><p id="detailBotany" class="filter-note"></p><div class="detail-actions"><button class="btn btn-primary" id="speakButton" aria-pressed="false">朗读花语</button><button class="btn btn-ghost" id="detailShare">分享</button><button class="btn btn-ghost" id="addBouquet">加入花束</button></div><div class="detail-grid"><div class="detail-block"><h4>颜色变体</h4><p id="detailColors">粉 · 白 · 淡紫</p></div><div class="detail-block"><h4>数量含义</h4><p id="detailCount">1枝：一心一意</p></div><div class="detail-block"><h4>适合对象</h4><p id="detailAudience">朋友 · 自己 · 初次见面的人</p></div><div class="detail-block"><h4>适合场合</h4><p id="detailOccasion">祝福 · 鼓励 · 新居</p></div></div><div class="detail-block"><h4>传说与来处</h4><p id="detailLegend"></p></div><div class="quote" id="detailPoem"></div><div class="detail-block"><h4>送花小心意</h4><p id="detailAdvice"></p></div><div class="detail-block"><h4>轻轻避开</h4><p id="detailTaboo"></p></div><button id="reminderButton" class="btn btn-ghost">记下花期</button><h3 class="detail-section-title">搭配与相似</h3><div class="similar-list" id="similarList"></div><div id="detailSource" class="detail-source"></div></aside>
+
+  <section class="modal" id="bouquetModal" role="dialog" aria-modal="true" aria-labelledby="bouquetTitle"><div class="modal-card"><div class="modal-head"><div><p class="eyebrow">A small bouquet</p><h2 id="bouquetTitle">生成一束心意</h2><p class="muted" style="margin:0;font-size:13px">选一至三种花，写一句想说的话。</p></div><button class="btn-icon" data-close-layer aria-label="关闭花束生成器">×</button></div><div class="form-grid"><div class="field"><label>选择花朵（最多 3 朵）</label><div class="bouquet-picks" id="bouquetPicks"></div></div><div class="card-options"><div class="field"><label for="cardPalette">贺卡配色</label><select id="cardPalette"><option value="paper">宣纸 · 苔绿</option><option value="rose">胭脂 · 暖砂</option><option value="moon">月白 · 雾青</option></select></div><div class="field"><label for="cardWrap">花束包装</label><select id="cardWrap"><option value="kraft">牛皮纸</option><option value="moon">月白纸</option><option value="leaf">苔绿纸</option></select></div></div><div class="field"><label for="cardMessage">贺卡文字</label><textarea id="cardMessage" maxlength="80" placeholder="愿你在每个季节，都有花开相伴。"></textarea></div><div class="field"><label for="cardTo">送给</label><input id="cardTo" maxlength="18" placeholder="写下对方的名字"></div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-primary" id="generateCard">生成贺卡</button><button class="btn btn-ghost" data-close-layer>稍后再写</button></div></div><div id="cardPreview" style="display:none;margin-top:24px"></div></div></section>
+
+
+<section class="modal" id="shareModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="shareTitle" inert><div class="modal-card"><div class="modal-head"><h2 id="shareTitle">寄一封花信</h2><button class="btn-icon" data-close-layer aria-label="关闭分享">×</button></div><label class="sr-only" for="shareText">可复制的花语文字</label><textarea id="shareText" class="share-text" readonly></textarea><button id="copyShare" class="btn btn-primary">复制花语与链接</button></div></section>
+<section class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="aboutTitle" inert><div class="modal-card"><div class="modal-head"><div><p class="eyebrow">A note on meaning</p><h2 id="aboutTitle">关于花语秘境</h2></div><button class="btn-icon" data-close-layer aria-label="关闭关于">×</button></div><p>一座让心意有处安放的小花园。花语不是全球统一的字典；我们同时呈现历史记录、诗歌意象与明确署名的原创寄语。</p><div class="about-source"><a href="https://www.gutenberg.org/cache/epub/31591/pg31591-images.html" target="_blank" rel="noopener noreferrer">Kate Greenaway · Language of Flowers ↗</a><small>历史条目：Hibiscus、Rose、Lily, White、Lavender、Sunflower、Chinese Chrysanthemum。按原书转述，并保留文化差异，不把它当作唯一标准。</small></div><div class="about-source">东方诗意<small>《诗经·郑风·有女同车》；陶渊明《饮酒·其五》；王安石《梅花》；李清照《鹧鸪天·桂花》。其余寄语、短章均为本园原创，已在各花详情中标明。</small></div><div class="about-source">使用与版权<small>花朵为原创 SVG 植物风格插画，并非用于物种鉴定。数量、配花与情绪推荐为编辑建议。花期随地区和品种变化；原产地为概览。引文为古典公版作品，图像、环境声均由代码生成。</small></div><div class="about-source">你的图鉴，只在这台设备<small>收藏与花期记录保存在当前浏览器；没有账号、追踪或上传。隐私模式或清除网站数据会影响保存。花期提醒只在打开页面时显示。语音由浏览器或系统提供，离线可用性因设备而异。</small></div><details style="margin-top:20px"><summary style="min-height:44px;cursor:pointer">设计系统 · tokens</summary><div class="token-grid"><span><div class="swatch" style="background:#18231e"></div>墨黑 #18231E</span><span><div class="swatch" style="background:#f5f3ee"></div>宣纸 #F5F3EE</span><span><div class="swatch" style="background:#365448"></div>苔绿 #365448</span><span><div class="swatch" style="background:#a96969"></div>胭脂 #A96969</span><span><div class="swatch" style="background:#c28b49"></div>琥珀 #C28B49</span><span><div class="swatch" style="background:#dfe5df"></div>雾灰 #DFE5DF</span></div><p class="filter-note">字体：系统宋体 / 系统无衬线<br>字号：12 · 14 · 16 · 24 · 36 · 响应式标题<br>间距：6 · 10 · 14 · 20 · 28 · 40 · 64 px<br>圆角：6 · 10 · 18 · 28 px；胶囊 999px<br>阴影：0 22px 60px rgba(25,42,34,.12)<br>模糊：18px；仅底部导航与轻雾<br>动效：420 / 720ms，cubic-bezier(.22,1,.36,1)<br>层级：场景 0 · 内容 2 · 导航 25 · 抽屉 31 · 弹窗 40 · 提示 60</p></details></div></section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+const flowers = [
+  {
+    "id": "hibiscus",
+    "name": "木槿",
+    "alias": "朝开暮落花",
+    "latin": "Hibiscus syriacus",
+    "family": "锦葵科",
+    "season": "夏",
+    "seasonCode": "summer",
+    "colors": [
+      "红",
+      "白"
+    ],
+    "colorLabel": "粉 · 白 · 淡紫",
+    "bloom": "6–10月",
+    "origin": "中国 · 韩国",
+    "scent": "清淡",
+    "meaning": "纤柔之美 · 温柔坚持",
+    "description": "木槿朝开暮落，却日日不绝。它把短暂活成了绵延，是温柔而坚定的自我更新。",
+    "legend": "【原创花园短章】晨光把一封信放在枝头，傍晚收回，翌日再写。日日开花，让坚持有了温柔的模样。",
+    "poem": "“有女同车，颜如舜华。”",
+    "poet": "—《诗经·郑风·有女同车》；舜华通常释为木槿",
+    "audience": "朋友 · 自己 · 初次见面的人",
+    "occasions": [
+      "祝福",
+      "鼓励",
+      "新居"
+    ],
+    "taboo": "数量与颜色没有统一禁忌。鲜切木槿保鲜期短，赠送前先确认运输与养护条件。",
+    "advice": "适合送给正在换工作、搬家或开启新阶段的人。搭配尤加利叶，像把风也一并送去。",
+    "count": "本园建议：1枝 · 今日也重新开始",
+    "tags": [
+      "治愈",
+      "重启",
+      "勇气"
+    ],
+    "bg": "radial-gradient(circle at 50% 28%, #f7dfd3, transparent 42%), linear-gradient(145deg,#d5e0d4,#a4b99f)",
+    "art": [
+      "#bc817b",
+      "#e4b9a2",
+      "#9d5a60"
+    ],
+    "sourceNote": "Greenaway《Language of Flowers》将 Hibiscus 记为“纤柔之美”，是属名条目，并非木槿专属。温柔坚持为本园依花性作的原创寄意。",
+    "sourceTitle": "Kate Greenaway · Language of Flowers",
+    "sourceUrl": "https://www.gutenberg.org/cache/epub/31591/pg31591-images.html",
+    "months": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "similar": [
+      "rose",
+      "plum"
+    ],
+    "audio": null,
+    "svg": "hibiscus",
+    "pairing": [
+      "玫瑰",
+      "梅花"
+    ]
+  },
+  {
+    "id": "rose",
+    "name": "玫瑰",
+    "alias": "蔷薇属园艺玫瑰",
+    "latin": "Rosa spp.（园艺切花）",
+    "family": "蔷薇科",
+    "season": "春",
+    "seasonCode": "spring",
+    "colors": [
+      "红",
+      "白"
+    ],
+    "colorLabel": "胭脂红 · 奶油白",
+    "bloom": "4–10月（随品种）",
+    "origin": "不同蔷薇属园艺品种，广泛栽培",
+    "scent": "浓郁花香",
+    "meaning": "热烈的爱 · 勇敢表达",
+    "description": "玫瑰把爱写得直接，却并不喧哗。刺是边界，花是靠近。",
+    "legend": "【原创花园短章】花园里有一朵玫瑰，把刺留给枝，把柔软留给来客。它说，亲近和边界，可以同时生长。",
+    "poem": "“把难以开口的话，藏在一片花瓣里。”",
+    "poet": "— 花语秘境 · 原创寄语",
+    "audience": "恋人 · 伴侣 · 想告白的人",
+    "occasions": [
+      "告白",
+      "纪念日",
+      "道歉"
+    ],
+    "taboo": "红玫瑰数量与关系语境有关，正式赠送前最好确认对方偏好。",
+    "advice": "想说“我喜欢你”，三枝是轻盈的确认，十一枝是认真而不压迫的长情。",
+    "count": "常见贺卡用法：1枝 · 唯一；3枝 · 我爱你；非统一标准",
+    "tags": [
+      "告白",
+      "热烈",
+      "勇敢"
+    ],
+    "bg": "radial-gradient(circle at 54% 30%, #f1d3c8, transparent 40%), linear-gradient(145deg,#ead9cf,#b68a83)",
+    "art": [
+      "#a94b54",
+      "#d7847d",
+      "#e5b3a0"
+    ],
+    "sourceNote": "Greenaway 记 Rose 为“爱”。同书中不同颜色另有不同寓意；本园“勇敢表达”为现代编辑寄语。商品名玫瑰多指园艺月季切花，不等同于单一植物种。",
+    "sourceTitle": "Kate Greenaway · Rose 条目",
+    "sourceUrl": "https://www.gutenberg.org/cache/epub/31591/pg31591-images.html",
+    "months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "similar": [
+      "hibiscus",
+      "lily"
+    ],
+    "audio": null,
+    "svg": "rose",
+    "pairing": [
+      "木槿",
+      "百合"
+    ]
+  },
+  {
+    "id": "lily",
+    "name": "百合",
+    "alias": "云中白",
+    "latin": "Lilium brownii",
+    "family": "百合科",
+    "season": "夏",
+    "seasonCode": "summer",
+    "colors": [
+      "白"
+    ],
+    "colorLabel": "月白 · 雪白",
+    "bloom": "6–8月",
+    "origin": "华东 · 喜马拉雅",
+    "scent": "清甜",
+    "meaning": "纯洁 · 百年好合",
+    "description": "百合的白像一页没有写满的信，留出空间，让祝愿抵达。",
+    "legend": "【原创花园短章】一张未写满的信，被折成百合的形状。收信人看见那片白，便知道有人祝愿一切安好。",
+    "poem": "“给祝愿留一点空白，让光替我写完。”",
+    "poet": "— 花语秘境 · 原创寄语",
+    "audience": "家人 · 新婚伴侣 · 重要长辈",
+    "occasions": [
+      "祝福",
+      "婚礼",
+      "探望"
+    ],
+    "taboo": "先确认香气、花粉耐受与家中宠物情况；避免在密闭病房放置浓香花束。",
+    "advice": "与桔梗、尤加利搭配，克制而明亮，适合写给家人的祝福。",
+    "count": "本园建议：6枝 · 事事和顺",
+    "tags": [
+      "纯粹",
+      "祝福",
+      "团圆"
+    ],
+    "bg": "radial-gradient(circle at 50% 25%, #fffdf0, transparent 40%), linear-gradient(145deg,#e7eadf,#b8c6ae)",
+    "art": [
+      "#eee8cf",
+      "#f7f2df",
+      "#d0c58f"
+    ],
+    "sourceNote": "Greenaway 将白百合记为“纯洁、甜美”；“百年好合”为中文名称谐音形成的祝愿表达，不同文化的白花礼仪并不相同。",
+    "sourceTitle": "Kate Greenaway · Lily, White 条目",
+    "sourceUrl": "https://www.gutenberg.org/cache/epub/31591/pg31591-images.html",
+    "months": [
+      6,
+      7,
+      8
+    ],
+    "similar": [
+      "rose",
+      "chrysanthemum"
+    ],
+    "audio": null,
+    "svg": "lily",
+    "pairing": [
+      "玫瑰",
+      "菊花"
+    ]
+  },
+  {
+    "id": "lavender",
+    "name": "薰衣草",
+    "alias": "紫色静默",
+    "latin": "Lavandula angustifolia",
+    "family": "唇形科",
+    "season": "夏",
+    "seasonCode": "summer",
+    "colors": [
+      "蓝紫"
+    ],
+    "colorLabel": "雾紫 · 蓝灰",
+    "bloom": "6–9月",
+    "origin": "地中海 · 云南",
+    "scent": "木质芳香",
+    "meaning": "安静陪伴 · 允许慢行",
+    "description": "薰衣草把喧闹滤成紫色的雾，提醒人慢一点，也能抵达。",
+    "legend": "【原创花园短章】迷路的人沿着紫色花丛走，发现自己不必立刻找到答案。风替他把脚步放慢，路也渐渐清楚了。",
+    "poem": "“把呼吸放慢，风会等你经过。”",
+    "poet": "— 花语秘境 · 原创寄语",
+    "audience": "疲惫的朋友 · 远方的人 · 自己",
+    "occasions": [
+      "思念",
+      "安慰",
+      "远行"
+    ],
+    "taboo": "香气较明显，密闭空间赠送前先确认对方是否敏感。",
+    "advice": "适合在一段忙乱之后送出，附一句“你可以慢慢来”。",
+    "count": "本园建议：1束 · 我愿静静陪伴",
+    "tags": [
+      "安定",
+      "思念",
+      "呼吸"
+    ],
+    "bg": "radial-gradient(circle at 52% 25%, #e9e5f0, transparent 42%), linear-gradient(145deg,#cfd1df,#9a9bb8)",
+    "art": [
+      "#8b86ae",
+      "#aaa3c7",
+      "#d1cce0"
+    ],
+    "sourceNote": "“安静陪伴”为本园原创寄语，不是古代统一花语。Greenaway 词典中的 Lavender 反而代表“不信任”，说明花语须结合文化与关系理解。",
+    "sourceTitle": "Kate Greenaway · Lavender 条目",
+    "sourceUrl": "https://www.gutenberg.org/cache/epub/31591/pg31591-images.html",
+    "months": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "similar": [
+      "hibiscus",
+      "plum"
+    ],
+    "audio": null,
+    "svg": "lavender",
+    "pairing": [
+      "木槿",
+      "梅花"
+    ]
+  },
+  {
+    "id": "sunflower",
+    "name": "向日葵",
+    "alias": "朝阳花",
+    "latin": "Helianthus annuus",
+    "family": "菊科",
+    "season": "夏",
+    "seasonCode": "summer",
+    "colors": [
+      "黄"
+    ],
+    "colorLabel": "琥珀黄 · 麦穗金",
+    "bloom": "7–9月",
+    "origin": "北美 · 中国北方",
+    "scent": "青草",
+    "meaning": "倾慕 · 向光而生",
+    "description": "向日葵不是因为不怕黑，才总面向光；是因为它记得光的方向。",
+    "legend": "【传说辨识】克丽泰凝望太阳的故事常被现代花艺移植到向日葵上，但古典植物意象不能直接等同于原产美洲的向日葵。本园用“向光”表达鼓励。",
+    "poem": "“不必成为太阳，也可以拥有自己的光。”",
+    "poet": "— 花语秘境 · 原创寄语",
+    "audience": "毕业生 · 伙伴 · 需要鼓励的人",
+    "occasions": [
+      "祝福",
+      "毕业",
+      "感谢"
+    ],
+    "taboo": "对花粉敏感的人需要谨慎，花束可选去粉处理。",
+    "advice": "适合给正在努力的人，不必等到他成功才送。",
+    "count": "本园建议：3枝 · 看见你的努力",
+    "tags": [
+      "希望",
+      "鼓励",
+      "光"
+    ],
+    "bg": "radial-gradient(circle at 50% 25%, #fff2bd, transparent 42%), linear-gradient(145deg,#ded8ae,#afa36d)",
+    "art": [
+      "#d49b36",
+      "#edc45f",
+      "#8f7b2f"
+    ],
+    "sourceNote": "Greenaway 将矮生向日葵记为“倾慕”，高生类型则为“高傲”。本园选择前者，并以原创文字表达鼓励。“忠诚”并非所有来源共有。",
+    "sourceTitle": "Kate Greenaway · Sunflower 条目",
+    "sourceUrl": "https://www.gutenberg.org/cache/epub/31591/pg31591-images.html",
+    "months": [
+      7,
+      8,
+      9
+    ],
+    "similar": [
+      "osmanthus",
+      "hibiscus"
+    ],
+    "audio": null,
+    "svg": "sunflower",
+    "pairing": [
+      "桂花",
+      "木槿"
+    ]
+  },
+  {
+    "id": "osmanthus",
+    "name": "桂花",
+    "alias": "秋日金粟",
+    "latin": "Osmanthus fragrans",
+    "family": "木犀科",
+    "season": "秋",
+    "seasonCode": "autumn",
+    "colors": [
+      "黄"
+    ],
+    "colorLabel": "金黄 · 蜜糖色",
+    "bloom": "9–10月",
+    "origin": "江南 · 西南",
+    "scent": "甜润浓郁",
+    "meaning": "收获 · 荣誉 · 甜蜜相逢",
+    "description": "桂花细小，却能把一整个秋天写进空气里。",
+    "legend": "【民间故事】月宫桂树与吴刚伐桂见于唐代段成式《酉阳杂俎》的月中传说。古代“桂”的植物指称与现代桂花并不总能简单对应。",
+    "poem": "“何须浅碧深红色，自是花中第一流。”",
+    "poet": "— 宋 · 李清照《鹧鸪天·桂花》",
+    "audience": "老师 · 长辈 · 远道而来的人",
+    "occasions": [
+      "感谢",
+      "祝贺",
+      "中秋"
+    ],
+    "taboo": "香气浓郁，餐桌与密闭空间可少量搭配。",
+    "advice": "与白菊、银杏叶搭配，像把秋日的光折进一张卡片。",
+    "count": "本园建议：1束 · 愿再相逢",
+    "tags": [
+      "收获",
+      "荣光",
+      "秋日"
+    ],
+    "bg": "radial-gradient(circle at 50% 25%, #fff0bd, transparent 40%), linear-gradient(145deg,#e9dfbd,#c3ad78)",
+    "art": [
+      "#d09b34",
+      "#f2c65f",
+      "#9c742d"
+    ],
+    "sourceNote": "本园取李清照咏桂词中的品格意象，编辑为“收获与相逢”；并非该词给出的固定花语。月宫传说与科普植物信息分开理解。",
+    "sourceTitle": "李清照《鹧鸪天·桂花》原文索引",
+    "sourceUrl": "https://zh.wikisource.org/wiki/鷓鴣天_(暗淡輕黃體性柔)",
+    "months": [
+      9,
+      10
+    ],
+    "similar": [
+      "sunflower",
+      "chrysanthemum"
+    ],
+    "audio": null,
+    "svg": "osmanthus",
+    "pairing": [
+      "向日葵",
+      "菊花"
+    ]
+  },
+  {
+    "id": "chrysanthemum",
+    "name": "菊花",
+    "alias": "东篱清影",
+    "latin": "Chrysanthemum morifolium",
+    "family": "菊科",
+    "season": "秋",
+    "seasonCode": "autumn",
+    "colors": [
+      "白",
+      "黄"
+    ],
+    "colorLabel": "秋白 · 柔黄",
+    "bloom": "9–11月",
+    "origin": "华北 · 江南",
+    "scent": "淡雅",
+    "meaning": "从容 · 逆境中的明朗",
+    "description": "菊花不抢春色，却在深秋留下最清醒的一笔。",
+    "legend": "【文学意象】陶渊明在《饮酒·其五》中写下东篱采菊。后世把菊与隐逸、淡泊相连；这是文学接受中的意象，而非植物天然的性格。",
+    "poem": "“采菊东篱下，悠然见南山。”",
+    "poet": "— 晋 · 陶渊明",
+    "audience": "长辈 · 思念的人 · 自己",
+    "occasions": [
+      "思念",
+      "敬意",
+      "重阳"
+    ],
+    "taboo": "白菊在不同地区常用于祭奠，正式送花前应确认当地习俗与语境。",
+    "advice": "想表达克制的思念时，可选择淡黄菊与松枝，避免全白花束。",
+    "count": "本园建议：一束 · 愿你安然；不设固定吉凶数字",
+    "tags": [
+      "从容",
+      "思念",
+      "清醒"
+    ],
+    "bg": "radial-gradient(circle at 50% 25%, #fff9e7, transparent 42%), linear-gradient(145deg,#e8e3d3,#b8b89e)",
+    "art": [
+      "#e8e1ca",
+      "#f4f0dd",
+      "#b3a261"
+    ],
+    "sourceNote": "Greenaway 的 Chinese Chrysanthemum 为“逆境中的愉快”。本园“从容”取陶渊明诗意；白菊在部分地区用于悼念，礼赠需确认当地习俗。",
+    "sourceTitle": "Kate Greenaway · Chinese Chrysanthemum 条目",
+    "sourceUrl": "https://www.gutenberg.org/cache/epub/31591/pg31591-images.html",
+    "months": [
+      9,
+      10,
+      11
+    ],
+    "similar": [
+      "osmanthus",
+      "plum"
+    ],
+    "audio": null,
+    "svg": "chrysanthemum",
+    "pairing": [
+      "桂花",
+      "梅花"
+    ]
+  },
+  {
+    "id": "plum",
+    "name": "梅花",
+    "alias": "雪中先行",
+    "latin": "Prunus mume",
+    "family": "蔷薇科",
+    "season": "冬",
+    "seasonCode": "winter",
+    "colors": [
+      "红",
+      "白"
+    ],
+    "colorLabel": "朱砂红 · 雪白",
+    "bloom": "12–3月（依地区）",
+    "origin": "江南 · 西南",
+    "scent": "冷冽清香",
+    "meaning": "坚韧 · 报春 · 高洁",
+    "description": "梅花把冬天的留白，开成第一个好消息。",
+    "legend": "【文学意象】王安石写凌寒独开的梅，陆游写零落成泥仍留香的梅。诗人让梅成为守持自我的象征。本园将这份诗意送给重新开始的人。",
+    "poem": "“墙角数枝梅，凌寒独自开。”",
+    "poet": "— 宋 · 王安石",
+    "audience": "远行者 · 新年祝福 · 敬佩的人",
+    "occasions": [
+      "祝福",
+      "新年",
+      "鼓励"
+    ],
+    "taboo": "梅枝较脆，长途携带宜用轻包装，避免压折。",
+    "advice": "适合在一个人准备重新开始时送出，配一张不写满的卡片。",
+    "count": "本园建议：1枝 · 给新的开始",
+    "tags": [
+      "坚韧",
+      "新生",
+      "清醒"
+    ],
+    "bg": "radial-gradient(circle at 50% 27%, #f9ddd7, transparent 42%), linear-gradient(145deg,#d9ded5,#a3aa99)",
+    "art": [
+      "#a85d62",
+      "#d38a82",
+      "#f0c2ae"
+    ],
+    "sourceNote": "“坚韧、高洁”依据王安石《梅花》与陆游《卜算子·咏梅》的诗歌意象；“报春”为花期与传统观赏中的寄意，不是全球统一花语。",
+    "sourceTitle": "王安石《梅花》原文",
+    "sourceUrl": "https://zh.wikisource.org/wiki/梅花_(王安石)",
+    "months": [
+      12,
+      1,
+      2,
+      3
+    ],
+    "similar": [
+      "hibiscus",
+      "chrysanthemum"
+    ],
+    "audio": null,
+    "svg": "plum",
+    "pairing": [
+      "木槿",
+      "菊花"
+    ]
+  }
+];
+/* Single-file application. Data and illustrations are local; optional browser
+   speech, audio, storage and sharing fail independently of the garden. */
+(() => {
+  'use strict';
+  const $ = (s,r=document) => r.querySelector(s), $$ = (s,r=document) => [...r.querySelectorAll(s)];
+  const byId = id => flowers.find(f => f.id === id);
+  const safe = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const setText = (id,v) => document.getElementById(id).textContent=v;
+  const read = (key,fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+  let storageAvailable=true;
+  function write(key,v) { try { localStorage.setItem(key,JSON.stringify(v)); } catch { storageAvailable=false; toast('本次收藏已保留；浏览器暂不允许永久保存。'); } }
+  const saved=read('huayu-favorites',[]);
+  let favorites = new Set(Array.isArray(saved)?saved.filter(id=>byId(id)):[]);
+  const reminderSaved=read('huayu-reminders',[]);
+  let reminders=new Set(Array.isArray(reminderSaved)?reminderSaved.filter(id=>byId(id)):[]);
+  let currentFlower=flowers[0],dailyFlower=flowers[0],bouquet=[],view='grid';
+  const filters={season:'all',color:'all',occasion:'all',audience:'all',tag:'all'};
+  const reducedQuery=matchMedia('(prefers-reduced-motion: reduce)'), coarseQuery=matchMedia('(pointer: coarse)');
+  const lowDevice=(navigator.deviceMemory && navigator.deviceMemory<=4)||(navigator.hardwareConcurrency && navigator.hardwareConcurrency<=4)||navigator.connection?.saveData||matchMedia('(update: slow)').matches;
+  let manualCalm=read('huayu-calm',false)===true, calm=!!(reducedQuery.matches||lowDevice||manualCalm);
+  let svgSerial=0, toastTimer;
+  function toast(message) { $('#toast').textContent=message;$('#toast').classList.add('is-visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('is-visible'),3000); }
+
+  /* Botanical plates: distinct flower architecture, one SVG generator.
+     The vector source also feeds high-resolution PNG greeting cards. */
+  function flowerSvg(f, purpose='plate') {
+    const uid='botanical-'+(++svgSerial),[a,b,c]=f.art;
+    const defs=`<defs><linearGradient id="${uid}p" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${b}"/><stop offset=".48" stop-color="${a}"/><stop offset="1" stop-color="${c}"/></linearGradient><linearGradient id="${uid}l"><stop stop-color="#849578"/><stop offset="1" stop-color="#344e38"/></linearGradient><radialGradient id="${uid}c"><stop stop-color="#a98b43"/><stop offset="1" stop-color="#493d2d"/></radialGradient></defs>`;
+    const petal=(angle,rx,ry,y=92,opacity=1)=>`<ellipse cx="200" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${angle} 200 167)" fill="url(#${uid}p)" stroke="${b}" stroke-width=".8" opacity="${opacity}"/>`;
+    const leaf=(x,y,rot,s=1)=>`<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})"><path d="M0 0Q-74-4-116-66Q-46-90 0 0Z" fill="url(#${uid}l)"/><path d="M0 0Q-51-43-108-63M-29-24l-9-32M-54-41l-6-25M-29-24l-35 6M-53-42l-26 3" fill="none" stroke="#b7bea1" stroke-width=".8" opacity=".5"/></g>`;
+    let stem=`<path d="M200 164C191 272 228 365 184 515" stroke="#536b4b" stroke-width="5" fill="none"/>${leaf(204,345,-13)}${leaf(204,391,174,.8)}${leaf(199,267,187,.57)}`;
+    let bloom='';
+    if(f.id==='hibiscus') {
+      bloom=Array.from({length:5},(_,i)=>`<g transform="rotate(${i*72} 200 167)"><path d="M200 171C167 143 103 95 140 44C165 19 193 37 200 44C231 19 267 43 259 74C253 125 219 148 200 171Z" fill="url(#${uid}p)" stroke="${b}" stroke-width="1"/><path d="M200 166Q179 108 160 56M200 164L202 59M200 160Q218 98 242 66" fill="none" stroke="${c}" opacity=".27"/></g>`).join('')+`<circle cx="200" cy="167" r="24" fill="${c}"/><path d="M200 169Q216 146 211 117" stroke="#e6c886" stroke-width="5"/>`+Array.from({length:15},(_,i)=>`<circle cx="${205+Math.sin(i*2.4)*9}" cy="${118+i*2.7}" r="2.4" fill="#f5dd98"/>`).join('');
+    } else if(f.id==='rose') {
+      bloom=Array.from({length:4},(_,ring)=>Array.from({length:7},(_,i)=>`<path d="M200 167C${90+ring*22} ${100+ring*12} ${145+ring*9} ${18+ring*29} 216 ${52+ring*23}C${283-ring*15} ${68+ring*21} ${260-ring*15} ${141+ring*5} 200 167Z" transform="rotate(${i*51.43+ring*27} 200 167)" fill="url(#${uid}p)" stroke="${b}" stroke-opacity=".5" stroke-width="1.2"/>`).join('')).join('')+`<path d="M190 164q-2-23 21-10q13 22-14 23q-21-10-7-13" fill="${c}" stroke="${b}"/>`;
+    } else if(f.id==='lily') {
+      bloom=Array.from({length:6},(_,i)=>`<g transform="rotate(${i*60} 200 167)"><path d="M200 173C164 142 146 80 177 34C184 93 221 93 232 38C266 96 240 145 200 173Z" fill="url(#${uid}p)" stroke="#d4cdb0"/><path d="M200 164Q190 106 184 59" stroke="#b2ad74" fill="none"/></g>`).join('')+Array.from({length:6},(_,i)=>`<g transform="rotate(${i*60} 200 167)"><path d="M200 167l13-47" stroke="#adb070" stroke-width="2"/><ellipse cx="213" cy="118" rx="4" ry="9" fill="#947440"/></g>`).join('');
+    } else if(f.id==='lavender') {
+      stem='';for(let branch=0;branch<5;branch++){let x=113+branch*42,y=55+Math.abs(branch-2)*24;stem+=`<path d="M185 515Q${x} 360 ${x} ${y+40}" fill="none" stroke="#627a54" stroke-width="3"/>${leaf(x,335+branch*10,branch%2?170:15,.52)}`;for(let k=0;k<14;k++) bloom+=`<ellipse cx="${x+Math.sin(k*2.4)*10}" cy="${y+k*9}" rx="${7+Math.sin(k)*2}" ry="14" transform="rotate(${k%2?28:-28} ${x} ${y+k*9})" fill="${k%3? a:b}" stroke="${c}" stroke-width=".8"/>`;}
+    } else if(f.id==='sunflower') {
+      bloom=Array.from({length:30},(_,i)=>petal(i*12,12,75,107,.98)).join('')+`<circle cx="200" cy="167" r="60" fill="url(#${uid}c)"/>`+Array.from({length:130},(_,i)=>{const r=Math.sqrt(i)*4.8,t=i*2.399;return `<circle cx="${200+Math.cos(t)*r}" cy="${167+Math.sin(t)*r}" r="1.6" fill="#c7a65b" opacity=".65"/>`;}).join('');
+    } else if(f.id==='chrysanthemum') {
+      bloom=Array.from({length:4},(_,ring)=>Array.from({length:22},(_,i)=>petal(i*360/22+ring*9,9-ring,65-ring*12,105+ring*18)).join('')).join('')+`<circle cx="200" cy="167" r="14" fill="#b7a56a"/>`;
+    } else if(f.id==='osmanthus'||f.id==='plum') {
+      stem=`<path d="M170 526Q212 380 179 250Q173 188 244 56M193 366Q97 245 89 174M185 277Q278 244 318 160" fill="none" stroke="${f.id==='plum'?'#675344':'#586445'}" stroke-width="7" stroke-linecap="round"/>`;
+      if(f.id==='osmanthus') stem+=leaf(194,358,13,.82)+leaf(183,281,181,.95)+leaf(209,134,144,.65);
+      const points=f.id==='plum'?[[242,83,1],[217,143,.85],[177,241,1],[109,232,.85],[308,171,.78],[266,222,.64]]:[[241,85,.5],[206,168,.56],[183,238,.5],[106,234,.43],[304,171,.5],[262,225,.53]];
+      bloom=points.map(([x,y,s])=>`<g transform="translate(${x} ${y}) scale(${s})">`+Array.from({length:f.id==='plum'?5:4},(_,i)=>`<ellipse cx="0" cy="-20" rx="${f.id==='plum'?19:14}" ry="25" transform="rotate(${i*(f.id==='plum'?72:90)})" fill="url(#${uid}p)" stroke="${b}"/>`).join('')+`<circle r="7" fill="#caab57"/>`+Array.from({length:8},(_,i)=>`<path d="M0 0l${Math.cos(i)*14} ${Math.sin(i)*14}" stroke="#ead797" stroke-width="1"/>`).join('')+'</g>').join('');
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 530" width="400" height="530" role="img" aria-label="${f.name}原创植物插画">${defs}${stem}${bloom}</svg>`;
+  }
+
+  const seasons={spring:{name:'春',label:'春生 · 风把花信送来',index:'01',top:'#172e24',bottom:'#6d7960',ids:['rose','plum','rose']},summer:{name:'夏',label:'夏长 · 一束光的来信',index:'02',top:'#102d27',bottom:'#557764',ids:['hibiscus','lily','lavender']},autumn:{name:'秋',label:'秋收 · 把温柔酿成香',index:'03',top:'#302e22',bottom:'#87734f',ids:['osmanthus','chrysanthemum','osmanthus']},winter:{name:'冬',label:'冬藏 · 留白里有花开',index:'04',top:'#203435',bottom:'#768781',ids:['plum','plum','plum']}};
+  let seasonKey='summer', seasonChosen=false;
+  function setSeason(key,notify=false) { const s=seasons[key];if(!s)return;seasonKey=key;$('.hero').style.setProperty('--scene-top',s.top);$('.hero').style.setProperty('--scene-bottom',s.bottom);$('#heroBotanical').innerHTML=s.ids.map((id,i)=>`<button class="garden-bloom" data-open="${id}" aria-label="走近${byId(id).name}" tabindex="${i?'-1':'0'}">${flowerSvg(byId(id),'hero')}<span>${byId(id).name} ↗</span></button>`).join('');if(!calm)$('#heroBotanical').animate([{opacity:.2},{opacity:1}],{duration:720,easing:'cubic-bezier(.22,1,.36,1)'});setText('seasonLabel',s.label);setText('seasonIndex',s.index);$$('.season-switch button').forEach(b=>{b.classList.toggle('is-active',b.dataset.season===key);b.setAttribute('aria-pressed',b.dataset.season===key);});if(notify)toast(`已走进${s.name}日花园`); }
+  function cardHtml(f,i) { const active=favorites.has(f.id);return `<article class="flower-card" style="--card-bg:${f.bg};animation-delay:${calm?0:Math.min(i*35,210)}ms"><button class="flower-card-fav ${active?'is-active':''}" data-fav="${f.id}" aria-pressed="${active}" aria-label="${active?'取消收藏':'收藏'}${f.name}">${active?'♥':'♡'}</button><div class="flower-card-art">${flowerSvg(f)}</div><div class="flower-card-body"><div class="flower-card-name"><h3><button data-open="${f.id}" aria-label="查看${f.name}花语">${f.name}</button></h3><small>${f.season} · ${f.bloom}</small></div><p class="flower-card-meaning">${f.meaning}</p><div class="flower-card-footer"><span class="tag">${f.tags[0]}</span><span class="muted">${f.season}日花信 ↗</span></div></div></article>`; }
+  function filteredFlowers(){const q=$('#searchInput').value.trim().toLocaleLowerCase();return flowers.filter(f=>(!q||[f.name,f.alias,f.latin,f.meaning,f.description,f.audience,...f.tags,...f.occasions].join(' ').toLocaleLowerCase().includes(q))&&(filters.season==='all'||f.months.some(m=>({春:[3,4,5],夏:[6,7,8],秋:[9,10,11],冬:[12,1,2]})[filters.season].includes(m)))&&(filters.color==='all'||f.colors.includes(filters.color))&&(filters.occasion==='all'||f.occasions.includes(filters.occasion))&&(filters.audience==='all'||f.audience.includes(filters.audience))&&(filters.tag==='all'||f.tags.includes(filters.tag)));}
+  function renderResults() { const list=filteredFlowers();$('#flowerGrid').innerHTML=list.map(cardHtml).join('');$('#flowerGrid').hidden=view!=='grid'||!list.length;$('#mapView').hidden=view!=='map'||!list.length;$('#timelineView').hidden=view!=='timeline'||!list.length;$('#mapView').classList.toggle('is-visible',view==='map'&&!!list.length);$('#timelineView').classList.toggle('is-visible',view==='timeline'&&!!list.length);$('#emptyState').hidden=!!list.length;setText('resultStatus',`找到 ${list.length} 朵花 · ${view==='map'?'花园分区示意，可轻触漫步':view==='timeline'?'常见观赏花期，可点击花名':'轻触卡片，读一封花的来信'}`);$('#mapView').innerHTML=`<div class="garden-map"><span class="map-caption">四季小园 · 示意漫步地图</span>${list.map((f,i)=>`<button data-open="${f.id}" style="left:${8+(i%3)*31}%;top:${60+Math.floor(i/3)*113}px" aria-label="地图：${f.name}">${flowerSvg(f)}${f.name}</button>`).join('')}</div><p class="filter-note">花园分区是探索索引，不代表植物原产地。原产信息见详情。</p>`;$('#timelineView').innerHTML=`<div class="phenology"><div class="phenology-row heading"><small>月份</small>${Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('')}</div>${list.map(f=>`<div class="phenology-row"><button data-open="${f.id}">${f.name}</button>${Array.from({length:12},(_,i)=>`<span class="${f.months.includes(i+1)?'in-bloom':''}" aria-label="${i+1}月${f.months.includes(i+1)?'花期':'非主要花期'}"></span>`).join('')}</div>`).join('')}</div><p class="filter-note">花期为温带露地参考，受品种、纬度与气候影响。</p>`; }
+  function resetFilters(){Object.keys(filters).forEach(k=>filters[k]='all');$('#searchInput').value='';$$('.filter-options button').forEach(b=>{b.classList.toggle('is-active',b.dataset.value==='all');b.setAttribute('aria-pressed',b.dataset.value==='all');});$('#audienceFilter').value='all';$('#tagFilter').value='all';renderResults();}
+
+  /* Modal stack: inert background, focus loop, Escape, focus restoration. */
+  const stack=[];
+  function syncLayers(){const top=stack.at(-1)?.el;$$('body > header,body > main,body > footer,body > nav').forEach(el=>el.inert=!!top);$$('.modal,#detailDrawer').forEach(el=>el.inert=el!==top);document.body.style.overflow=top?'hidden':'';$('#backdrop').classList.toggle('is-visible',stack.some(x=>x.el.id==='detailDrawer'));}
+  function openLayer(el){if(stack.at(-1)?.el===el)return;stack.push({el,focus:document.activeElement});el.classList.add('is-open');el.setAttribute('aria-hidden','false');syncLayers();el.querySelector('button,input,textarea')?.focus({preventScroll:true});}
+  function closeLayer(){const entry=stack.pop();if(!entry)return;entry.el.classList.remove('is-open');entry.el.setAttribute('aria-hidden','true');if(entry.el.id==='detailDrawer')stopSpeech();syncLayers();if(entry.focus?.isConnected)entry.focus.focus({preventScroll:true});}
+  function setDetail(f){currentFlower=f;stopSpeech();$('#detailArt').style.setProperty('--detail-bg',f.bg);$('#detailArt').innerHTML=flowerSvg(f);setText('detailTitle',f.name);setText('detailLatin',`${f.latin} · ${f.family}`);setText('detailMeaning',f.meaning);setText('detailDescription',f.description);setText('detailColors',f.colorLabel);setText('detailCount',f.count);setText('detailAudience',f.audience);setText('detailOccasion',f.occasions.join(' · '));setText('detailLegend',f.legend);setText('detailAdvice',f.advice);setText('detailTaboo',f.taboo);setText('detailBotany',`${f.alias} · ${f.bloom} · ${f.origin} · 香气：${f.scent}`);$('#detailPoem').innerHTML=`${safe(f.poem)}<cite>${safe(f.poet)}</cite>`;$('#detailSource').innerHTML=`<strong>花语出处与文化差异</strong><p>${safe(f.sourceNote)}</p><a href="${f.sourceUrl}" target="_blank" rel="noopener noreferrer">${safe(f.sourceTitle)} ↗</a><p>数量寓意为本园贺卡建议，不是统一民俗。情绪推荐为文字陪伴。</p>`;$('#similarList').innerHTML=f.similar.map(id=>`<button class="similar-item" data-open="${id}">${flowerSvg(byId(id))}<strong>${byId(id).name}</strong><small>${byId(id).tags[0]}</small></button>`).join('');updateDetailFavorite();$('#detailDrawer').scrollTop=0;setText('detailHint',calm||coarseQuery.matches||innerWidth<700?'原创植物插画 · 轻触阅读花的故事':'拖动插画，换个角度看花');}
+  function updateDetailFavorite(){const active=favorites.has(currentFlower.id);$('#detailFav').classList.toggle('is-active',active);$('#detailFav').setAttribute('aria-pressed',active);$('#detailFav').setAttribute('aria-label',(active?'取消收藏':'收藏')+currentFlower.name);setText('reminderButton',reminders.has(currentFlower.id)?'取消花期提醒':'记下花期');}
+  function openDetail(f,source){if(!f)return;const image=source?.closest('.flower-card')?.querySelector('svg');const drawer=$('#detailDrawer');if(document.startViewTransition&&!calm&&image&&!drawer.classList.contains('is-open')){image.style.viewTransitionName='active-flower';const tx=document.startViewTransition(()=>{image.style.viewTransitionName='';setDetail(f);$('#detailArt svg').style.viewTransitionName='active-flower';openLayer(drawer);});tx.finished.catch(()=>{}).finally(()=>$('#detailArt svg')?.style.removeProperty('view-transition-name'));}else{setDetail(f);openLayer(drawer);}}
+  function toggleFavorite(id){const f=byId(id);if(favorites.has(id))favorites.delete(id);else favorites.add(id);write('huayu-favorites',[...favorites]);$$(`[data-fav="${id}"]`).forEach(b=>{b.classList.toggle('is-active',favorites.has(id));b.setAttribute('aria-pressed',favorites.has(id));b.setAttribute('aria-label',(favorites.has(id)?'取消收藏':'收藏')+f.name);b.textContent=favorites.has(id)?'♥':'♡';});updateDetailFavorite();renderCollection();toast(`${favorites.has(id)?'已收藏':'已取消收藏'}「${f.name}」`);}
+  function renderCollection(){const fs=flowers.filter(f=>favorites.has(f.id));setText('collectionCount',`已收集 ${fs.length} / ${flowers.length} · ${fs.length===8?'四季知音':fs.length>=4?'花间旅人':fs.length?'初识花意':'等待第一朵相遇'}`);$('#collectionList').innerHTML=fs.length?`<div class="collection-list">${fs.map(f=>`<button data-open="${f.id}">${flowerSvg(f)}<strong>${f.name}</strong><small>${f.bloom}</small></button>`).join('')}</div>`:'<div class="collection-empty">轻触花朵旁的 ♡，把相遇收进自己的图鉴。</div>';const month=new Date().getMonth()+1;const due=flowers.filter(f=>reminders.has(f.id)&&f.months.includes(month));setText('bloomReminders',due.length?`当月花期提醒：${due.map(f=>f.name).join('、')}。记得留意身边的花开。`:reminders.size?'已记下花期，下次打开花园时会提示当月花信。':'在花语详情中记下花期，回到花园时收取当月花信。');}
+  const moodMap={'思念':['chrysanthemum','lavender'],'焦虑':['lavender','hibiscus'],'暗恋':['rose','osmanthus'],'歉意':['lily','hibiscus'],'祝福':['sunflower','plum']};
+  function renderMood(mood){const ids=moodMap[mood],f=byId(ids[0]);$('#moodResult').innerHTML=`<div class="mood-result-card"><div class="mood-result-art">${flowerSvg(f)}</div><div><p class="eyebrow">${mood} · 花园来信</p><h3>${f.name}，${f.meaning.split(' · ')[0]}</h3><p>${f.description}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${ids.map(id=>`<button class="tag" data-open="${id}">读${byId(id).name}花语 ↗</button>`).join('')}</div></div></div>`;}
+  function renderDaily(){const d=new Date(),key=[d.getFullYear(),d.getMonth()+1,d.getDate()].join('-');let hash=0;for(const c of key)hash=(hash*31+c.charCodeAt(0))>>>0;dailyFlower=flowers[hash%flowers.length];setText('dailyName',dailyFlower.name);setText('dailyDate',`${d.getFullYear()} · ${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getDate()).padStart(2,'0')}`);setText('dailyQuote',dailyFlower.meaning);setText('dailyMeaning',dailyFlower.description);$('#dailyMeta').innerHTML=`<span class="tag">${dailyFlower.season} · ${dailyFlower.bloom}</span><span class="tag">今日为你而开</span>`;$('#dailyFlower').innerHTML=flowerSvg(dailyFlower);$('#dailyArt').style.background=dailyFlower.bg;}
+
+  /* Sharing keeps user action explicit; unsupported APIs reveal copyable text. */
+  let shareText='';
+  async function shareFlower(f){const u=new URL(location.href);u.hash='flower='+f.id;shareText=`「${f.name}」${f.meaning}\n${f.description}\n${location.protocol.startsWith('http')?u.href:'花语秘境 · 四季花园'}`;if(navigator.share){try{await navigator.share({title:'花语秘境 · '+f.name,text:shareText});return;}catch(e){if(e.name==='AbortError')return;}}$('#shareText').value=shareText;openLayer($('#shareModal'));}
+  async function copyShare(){try{if(!navigator.clipboard)throw new Error('clipboard');await navigator.clipboard.writeText(shareText);toast('花语已复制');}catch{$('#shareText').focus();$('#shareText').select();toast('请长按或按 Ctrl+C 复制花语');}}
+
+  /* Web Speech API: real play/stop/error states and visible transcript. */
+  let speaking=false;
+  function stopSpeech(){if('speechSynthesis'in window)speechSynthesis.cancel();speaking=false;setText('speakButton','朗读花语');$('#speakButton').setAttribute('aria-pressed','false');}
+  function toggleSpeech(){if(speaking){stopSpeech();return;}if(!('speechSynthesis'in window)){toast('浏览器不支持朗读，可阅读下方文字稿。');return;}const f=currentFlower,u=new SpeechSynthesisUtterance(`${f.name}。${f.meaning}。${f.description}`);u.lang='zh-CN';u.rate=.85;speaking=true;setText('speakButton','停止朗读');$('#speakButton').setAttribute('aria-pressed','true');u.onend=()=>{speaking=false;setText('speakButton','朗读花语');$('#speakButton').setAttribute('aria-pressed','false');};u.onerror=e=>{if(!['canceled','interrupted'].includes(e.error))toast('朗读暂不可用，请阅读文字稿。');u.onend();};speechSynthesis.speak(u);}
+
+  /* Ambient sound is synthesized locally, never autoplayed. */
+  let audioCtx,audioBus,audioOn=false,audioSources=[];
+  async function toggleAudio(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw new Error('unsupported');if(!audioCtx){audioCtx=new Audio();audioBus=audioCtx.createGain();audioBus.gain.value=0;audioBus.connect(audioCtx.destination);[174.61,261.63,349.23].forEach((hz,i)=>{const osc=audioCtx.createOscillator(),g=audioCtx.createGain();osc.type='sine';osc.frequency.value=hz;g.gain.value=.018/(i+1);osc.connect(g).connect(audioBus);osc.start();audioSources.push(osc);});const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*3,audioCtx.sampleRate),values=buffer.getChannelData(0);let last=0;for(let i=0;i<values.length;i++){last=(last+Math.random()*.025-.0125)/1.018;values[i]=last;}const noise=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter();noise.buffer=buffer;noise.loop=true;filter.type='lowpass';filter.frequency.value=540;noise.connect(filter).connect(audioBus);noise.start();audioSources.push(noise);}await audioCtx.resume();audioOn=!audioOn;audioBus.gain.cancelScheduledValues(audioCtx.currentTime);audioBus.gain.setValueAtTime(audioBus.gain.value,audioCtx.currentTime);audioBus.gain.linearRampToValueAtTime(audioOn?.9:0,audioCtx.currentTime+.8);$('#audioToggle').classList.toggle('is-active',audioOn);$('#audioToggle').setAttribute('aria-pressed',audioOn);$('#audioToggle').setAttribute('aria-label',audioOn?'关闭环境音':'开启环境音');toast(audioOn?'风声与和音已开启':'环境音已关闭');}catch{audioOn=false;toast('环境音暂不可用，花园仍可静静浏览。');}}
+
+  /* Bouquet editor and 1200 × 1600 PNG export; no server roundtrip. */
+  function renderBouquet(){ $('#bouquetPicks').innerHTML=flowers.map(f=>`<button data-bouquet="${f.id}" class="${bouquet.includes(f.id)?'is-active':''}" aria-pressed="${bouquet.includes(f.id)}" aria-label="选择${f.name}">${flowerSvg(f)}<span>${f.name}</span></button>`).join(''); }
+  function openBouquet(f){if(f&&!bouquet.includes(f.id)){if(bouquet.length<3)bouquet.push(f.id);else toast('花束已有三朵，可先取消一朵再选择。');}renderBouquet();openLayer($('#bouquetModal'));}
+  let cardUrl;
+  async function loadSvg(f){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(new Blob([flowerSvg(f)],{type:'image/svg+xml;charset=utf-8'})),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('image'));};img.src=url;});}
+  async function generateCard(){const btn=$('#generateCard');btn.disabled=true;btn.textContent='正在绘制…';const selected=bouquet.length?bouquet:[dailyFlower.id];try{const imgs=await Promise.all(selected.map(id=>loadSvg(byId(id))));const c=document.createElement('canvas');c.width=1200;c.height=1600;const g=c.getContext('2d');if(!g)throw new Error('canvas');const tones={paper:['#f4f1e7','#dae1cf','#294536'],rose:['#eee4df','#dac6ba','#6c4c48'],moon:['#e7ece9','#cad8d1','#314a4c']},tone=tones[$('#cardPalette').value];g.fillStyle=tone[0];g.fillRect(0,0,1200,1600);g.strokeStyle=tone[2];g.globalAlpha=.25;g.strokeRect(52,52,1096,1496);g.globalAlpha=1;g.textAlign='center';g.fillStyle=tone[2];g.font='18px Georgia';g.fillText('A NOTE FROM THE GARDEN',600,142);g.font='38px "Songti SC", SimSun, serif';g.fillText('花 语 秘 境',600,206);const pack=$('#cardWrap').value;g.fillStyle=pack==='kraft'?'#b6a387':pack==='moon'?'#d9ddd4':'#c1ccc0';g.beginPath();g.moveTo(280,605);g.lineTo(920,605);g.lineTo(710,1115);g.lineTo(505,1115);g.closePath();g.fill();imgs.forEach((img,i)=>{g.save();g.translate(600+(i-(imgs.length-1)/2)*160,675+Math.abs(i-(imgs.length-1)/2)*45);g.rotate((i-(imgs.length-1)/2)*.16);g.drawImage(img,-245,-395,490,650);g.restore();});g.strokeStyle=tone[2];g.lineWidth=5;g.beginPath();g.moveTo(489,947);g.quadraticCurveTo(600,974,725,947);g.moveTo(605,958);g.quadraticCurveTo(510,880,551,973);g.quadraticCurveTo(625,932,677,978);g.stroke();g.fillStyle=tone[2];g.font='28px "Microsoft YaHei", sans-serif';g.fillText(($('#cardTo').value.trim()||'给你').slice(0,18),600,1175);g.font='34px "Songti SC", SimSun, serif';const msg=$('#cardMessage').value.trim()||'愿你在每个季节，都有花开相伴。';let lines=[],line='';for(const char of msg){if(char==='\n'||g.measureText(line+char).width>870){lines.push(line);line=char==='\n'?'':char;}else line+=char;}if(line)lines.push(line);lines.slice(0,5).forEach((t,i)=>g.fillText(t,600,1255+i*52));g.font='20px "Microsoft YaHei", sans-serif';g.fillText(selected.map(id=>byId(id).name).join(' · '),600,1520);const blob=await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('export')),'image/png'));if(cardUrl)URL.revokeObjectURL(cardUrl);cardUrl=URL.createObjectURL(blob);$('#cardPreview').replaceChildren();const img=new Image();img.src=cardUrl;img.className='card-export';img.alt='生成的花束贺卡预览';const link=document.createElement('a');link.href=cardUrl;link.download='花语秘境-花束贺卡.png';link.className='btn btn-primary';link.style.marginTop='12px';link.textContent='下载 PNG 图片';$('#cardPreview').append(img,link);$('#cardPreview').style.display='block';$('#cardPreview').scrollIntoView({behavior:calm?'auto':'smooth',block:'nearest'});toast('贺卡已生成，可下载保存');}catch{toast('贺卡生成失败，请重试；文字已为你保留。');}finally{btn.disabled=false;btn.textContent='生成贺卡';}}
+
+  /* One frame loop, passive pointer input, hard particle ceilings. */
+  const canvas=$('#particleCanvas'),ctx=canvas.getContext('2d');let particles=[],pendingPointer=null,frame=0,lastFrame=0,lastEmit=0,ambientClock=0,poorFrames=0,heroVisible=true;
+  function resizeCanvas(){if(!ctx)return;const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}
+  function emit(x,y,count,ambient=false){if(calm||!ctx)return;const max=coarseQuery.matches?80:60;for(let i=0;i<count&&particles.length<max;i++)particles.push({x,y,vx:(Math.random()-.5)*.45,vy:ambient?.45:-.5-Math.random()*.6,size:ambient?2.5:1+Math.random()*2.2,life:ambient?9000:1300+Math.random()*800,age:0,angle:Math.random()*6.28,ambient});}
+  function startParticles(){if(!frame&&!calm&&!document.hidden&&ctx)frame=requestAnimationFrame(tick);}
+  function tick(t){frame=0;if(calm||document.hidden||!ctx)return;const raw=lastFrame?t-lastFrame:16.7,dt=Math.min(raw,48);lastFrame=t;if(raw>55&&raw<1000)poorFrames++;else poorFrames=Math.max(0,poorFrames-.25);if(poorFrames>60){manualCalm=true;updateMotion();toast('已切换轻量模式，让浏览更顺畅。');return;}ctx.clearRect(0,0,innerWidth,innerHeight);if(pendingPointer&&t-lastEmit>35){emit(pendingPointer.x,pendingPointer.y,pendingPointer.click?6:pendingPointer.touch?2:1);pendingPointer=null;lastEmit=t;}if(heroVisible&&t-ambientClock>850){emit(Math.random()*innerWidth,-12,1,true);ambientClock=t;}particles=particles.filter(p=>p.age<p.life&&p.y<innerHeight+20);for(const p of particles){p.age+=dt;p.x+=p.vx*dt/16.7;p.y+=p.vy*dt/16.7;p.angle+=dt*.0003;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.fillStyle=`rgba(228,203,162,${Math.min(.4,p.age/300)*(1-p.age/p.life)})`;ctx.beginPath();ctx.ellipse(0,0,p.size,p.size*1.7,0,0,Math.PI*2);ctx.fill();ctx.restore();}if(heroVisible||particles.length||pendingPointer)startParticles();}
+  function updateMotion(){calm=!!(manualCalm||reducedQuery.matches||lowDevice);document.body.classList.toggle('calm',calm);setText('motionStatus',calm?'静谧模式 · 已关闭粒子与立体旋转':'自然模式 · 轻风与花瓣');$('#motionToggle').setAttribute('aria-pressed',calm);setText('motionToggle',calm?'尝试自然模式':'切换静谧模式');if(calm){cancelAnimationFrame(frame);frame=0;particles=[];pendingPointer=null;ctx?.clearRect(0,0,innerWidth,innerHeight);}else{lastFrame=0;startParticles();}}
+
+  /* Delegated actions: newly rendered cards need no duplicate listeners. */
+  document.addEventListener('click',e=>{const open=e.target.closest('[data-open]');if(open){openDetail(byId(open.dataset.open),open);return;}const fav=e.target.closest('[data-fav]');if(fav){toggleFavorite(fav.dataset.fav);return;}if(e.target.closest('[data-close-layer]')){closeLayer();return;}if(e.target.classList.contains('modal'))closeLayer();});
+  $$('.filter-options button').forEach(b=>b.addEventListener('click',()=>{const group=b.closest('[data-filter-group]').dataset.filterGroup;filters[group]=b.dataset.value;$$('button',b.parentElement).forEach(x=>{x.classList.toggle('is-active',x===b);x.setAttribute('aria-pressed',x===b);});renderResults();}));
+  $('#audienceFilter').addEventListener('change',e=>{filters.audience=e.target.value;renderResults();});$('#tagFilter').addEventListener('change',e=>{filters.tag=e.target.value;renderResults();});
+  let searchTimer;$('#searchInput').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(renderResults,100);});$('#resetFilters').addEventListener('click',resetFilters);$('#clearAllFilters').addEventListener('click',resetFilters);
+  $$('.view-switch button').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view;$$('.view-switch button').forEach(x=>{x.classList.toggle('is-active',x===b);x.setAttribute('aria-pressed',x===b);});renderResults();}));
+  $$('.season-switch button').forEach(b=>b.addEventListener('click',()=>(seasonChosen=true,setSeason(b.dataset.season,true))));
+  $$('.mood-chip').forEach(b=>b.addEventListener('click',()=>{$$('.mood-chip').forEach(x=>{x.classList.toggle('is-active',x===b);x.setAttribute('aria-pressed',x===b);});renderMood(b.dataset.mood);}));
+  $('#dailyDetail').addEventListener('click',()=>openDetail(dailyFlower));$('#dailyShare').addEventListener('click',()=>shareFlower(dailyFlower));$('#dailySave').addEventListener('click',()=>toggleFavorite(dailyFlower.id));$('#dailyCard').addEventListener('click',()=>openBouquet(dailyFlower));$('#randomFlower').addEventListener('click',()=>openDetail(flowers[Math.floor(Math.random()*flowers.length)]));
+  $('#closeDetail').addEventListener('click',closeLayer);$('#backdrop').addEventListener('click',()=>{if(stack.at(-1)?.el.id==='detailDrawer')closeLayer();});$('#detailFav').addEventListener('click',()=>toggleFavorite(currentFlower.id));$('#detailShare').addEventListener('click',()=>shareFlower(currentFlower));$('#addBouquet').addEventListener('click',()=>openBouquet(currentFlower));$('#speakButton').addEventListener('click',toggleSpeech);$('#audioToggle').addEventListener('click',toggleAudio);$('#copyShare').addEventListener('click',copyShare);
+  $('#reminderButton').addEventListener('click',()=>{const id=currentFlower.id;reminders.has(id)?reminders.delete(id):reminders.add(id);write('huayu-reminders',[...reminders]);updateDetailFavorite();renderCollection();toast(reminders.has(id)?'花期已记下，回到花园时查看当月提醒。':'已取消花期提醒');});
+  $$('[data-bouquet-open],#openBouquet').forEach(b=>b.addEventListener('click',()=>openBouquet()));$('#generateCard').addEventListener('click',generateCard);
+  $('#bouquetPicks').addEventListener('click',e=>{const b=e.target.closest('[data-bouquet]');if(!b)return;const id=b.dataset.bouquet;if(bouquet.includes(id))bouquet=bouquet.filter(x=>x!==id);else if(bouquet.length<3)bouquet.push(id);else{toast('最多选择三种花，请先取消一朵。');return;}$$('[data-bouquet]').forEach(x=>{x.classList.toggle('is-active',bouquet.includes(x.dataset.bouquet));x.setAttribute('aria-pressed',bouquet.includes(x.dataset.bouquet));});});
+  $$('.bottom-nav [data-scroll]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.scroll).scrollIntoView({behavior:calm?'auto':'smooth'})));
+  $('#aboutLink').addEventListener('click',e=>{e.preventDefault();openLayer($('#aboutModal'));});$('#motionToggle').addEventListener('click',()=>{if((reducedQuery.matches||lowDevice)&&calm){toast(reducedQuery.matches?'已遵循系统减少动态效果设置。':'当前设备建议保持轻量模式。');return;}manualCalm=!manualCalm;write('huayu-calm',manualCalm);updateMotion();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stack.length){e.preventDefault();closeLayer();return;}if(e.key!=='Tab'||!stack.length)return;const el=stack.at(-1).el,focusable=$$('button:not([disabled]),a[href],input,select,textarea,[tabindex="0"]',el).filter(x=>x.getClientRects().length&&!x.closest('[inert]'));if(!focusable.length)return;const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
+  addEventListener('resize',resizeCanvas,{passive:true});addEventListener('pointermove',e=>{if(calm)return;if(e.pointerType==='touch'&&e.buttons===0)return;pendingPointer={x:e.clientX,y:e.clientY,touch:e.pointerType==='touch'};if(!coarseQuery.matches&&heroVisible){$('.hero').style.setProperty('--pointer-x',(e.clientX/innerWidth-.5)*2);$('.hero').style.setProperty('--pointer-y',(e.clientY/innerHeight-.5)*2);}startParticles();},{passive:true});
+  addEventListener('touchmove',e=>{if(calm||!e.touches[0])return;const p=e.touches[0];pendingPointer={x:p.clientX,y:p.clientY,touch:true};startParticles();},{passive:true});
+  addEventListener('pointerdown',e=>{if(calm)return;pendingPointer={x:e.clientX,y:e.clientY,click:true};startParticles();},{passive:true});
+  let drag=null;$('#detailArt').addEventListener('pointerdown',e=>{if(calm||coarseQuery.matches||innerWidth<700||e.pointerType!=='mouse')return;drag={x:e.clientX};$('#detailArt').setPointerCapture(e.pointerId);$('#detailArt svg')?.classList.add('is-dragging');});$('#detailArt').addEventListener('pointermove',e=>{if(!drag)return;const angle=Math.max(-48,Math.min(48,(e.clientX-drag.x)*.4));$('#detailArt svg').style.transform=`rotateY(${angle}deg)`;});const stopDrag=()=>{drag=null;$('#detailArt svg')?.classList.remove('is-dragging');};$('#detailArt').addEventListener('pointerup',stopDrag);$('#detailArt').addEventListener('pointercancel',stopDrag);$('#detailArt').addEventListener('lostpointercapture',stopDrag);
+  const network=()=>{setText('networkStatus',navigator.onLine?'本地内容 · 无需外部资源':'离线浏览 · 内容与收藏可用');};addEventListener('online',network);addEventListener('offline',()=>{network();toast('当前无网络，已打开的花园仍可继续探索。');});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;audioCtx?.suspend();stopSpeech();}else{lastFrame=0;startParticles();if(audioOn)audioCtx?.resume().catch(()=>{});renderDaily();}});
+  reducedQuery.addEventListener('change',updateMotion);
+  if('IntersectionObserver'in window){new IntersectionObserver(entries=>{heroVisible=entries[0].isIntersecting;if(heroVisible)startParticles();},{threshold:0}).observe($('.hero'));const navObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)$$('.bottom-nav [data-scroll]').forEach(b=>b.classList.toggle('is-active',b.dataset.scroll==='#'+entry.target.id));},{rootMargin:'-20% 0px -60% 0px'});$$('#home,#explore,#mood').forEach(el=>navObserver.observe(el));}
+  let scrollFrame=0;addEventListener('scroll',()=>{if(calm||scrollFrame)return;scrollFrame=requestAnimationFrame(()=>{scrollFrame=0;document.documentElement.style.setProperty('--scroll-progress',Math.min(scrollY/innerHeight,1));if(heroVisible&&!seasonChosen&&scrollY>40){const sequence=['summer','autumn','winter','spring'],next=sequence[Math.min(3,Math.floor(scrollY/(innerHeight*.22)))];if(next!==seasonKey)setSeason(next);}});},{passive:true});
+  // Horizontal garden swipes change seasons without preventing vertical scrolling.
+  let swipeStart;$('.hero').addEventListener('touchstart',e=>{const t=e.touches[0];swipeStart={x:t.clientX,y:t.clientY};},{passive:true});$('.hero').addEventListener('touchend',e=>{if(!swipeStart)return;const t=e.changedTouches[0],dx=t.clientX-swipeStart.x,dy=t.clientY-swipeStart.y;if(Math.abs(dx)>90&&Math.abs(dx)>Math.abs(dy)*1.7){const keys=Object.keys(seasons),i=keys.indexOf(seasonKey);seasonChosen=true;setSeason(keys[(i+(dx<0?1:3))%4],true);}swipeStart=null;},{passive:true});
+  // Initialization has no network dependency or service worker.
+  syncLayers();setSeason('summer');renderDaily();renderResults();renderMood('思念');renderCollection();resizeCanvas();updateMotion();network();$('#explore').removeAttribute('aria-busy');
+  $$('[data-filter-group] button,.mood-chip,.view-switch button').forEach(b=>b.setAttribute('aria-pressed',b.classList.contains('is-active')));
+  const openHash=()=>{const match=location.hash.match(/^#flower=([a-z]+)$/);if(match&&byId(match[1]))openDetail(byId(match[1]));};openHash();addEventListener('hashchange',openHash);
+  // Extension points: add a flower to the data; extend flowerSvg for its shape.
+})();
+
+</script>
+</body>
+</html>
