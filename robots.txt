@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://chambing1124.github.io/sitemap.xml
