@@ -1,0 +1,494 @@
+/* ============================================================
+   NAIWA — interaction layer（在原样式之后加载，只做增量覆盖）
+   1 氛围变量  2 声音开关  3 首屏抚摸  4 心情专属插图
+   5 计时器呼吸蛙  6 心情卡  7 跟随小蛙  8 首次仪式
+   9 逐字入场 10 响应式 11 减少动效
+   ============================================================ */
+
+/* ---------- 1. 心情 → 整页氛围 ---------- */
+html{
+  --page-bg:#f7f7ef;
+  --section-bg:#fff;
+  --halo:#f0e8ad;
+  --breath:8s;
+  --page-ink:#24291f;
+}
+html[data-mood="chill"]{--page-bg:#f7f7ef;--section-bg:#fff;--halo:#f0e8ad}
+html[data-mood="brave"]{--page-bg:#faf7ee;--section-bg:#fffdf7;--halo:#f5e2b3}
+html[data-mood="tired"]{--page-bg:#e9ebf1;--section-bg:#f4f5f9;--halo:#ccd3e2;--breath:10.5s}
+html[data-mood="happy"]{--page-bg:#fdf9ee;--section-bg:#fffdf6;--halo:#f8e4a2}
+
+body{background:var(--page-bg);transition:background .7s cubic-bezier(.22,1,.36,1)}
+.intro,.moods,.souvenir,.site-footer{background:var(--section-bg);transition:background .7s cubic-bezier(.22,1,.36,1)}
+.focus-section{background:var(--page-bg);transition:background .7s cubic-bezier(.22,1,.36,1)}
+/* 原样式里 .hero-scene 写死了纸色，换心情后会露出一块矩形，这里跟随页面底色 */
+.hero-scene{background:var(--page-bg,var(--paper));transition:background .7s cubic-bezier(.22,1,.36,1)}
+.site-header{background:rgba(247,247,239,.86);background:color-mix(in srgb,var(--page-bg) 88%,transparent)}
+.hero-halo{background:var(--halo);transition:background .7s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+html[data-mood="tired"] main{filter:brightness(.972) saturate(.9);transition:filter .7s ease}
+html[data-mood="tired"] .site-header{background:rgba(233,235,241,.86)}
+
+/* 首屏浮签跟随心情 */
+.floating-note{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .4s}
+.note-top span:last-child{transition:opacity .3s}
+
+/* ---------- 2. 声音开关 ---------- */
+.sound-toggle{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:transparent;border:1px solid #cdd2c4;color:#7c836f;
+  transition:background .25s,color .25s,border-color .25s;flex:none;
+}
+.sound-toggle:hover{background:#eef0e2;color:#3c4433}
+.sound-toggle svg{width:17px;height:17px;display:block}
+.sound-toggle .ico-off{display:block}
+.sound-toggle .ico-on{display:none}
+.sound-toggle[aria-pressed="true"]{background:#eef0e2;border-color:#a9b39a;color:#3c4433}
+.sound-toggle[aria-pressed="true"] .ico-off{display:none}
+.sound-toggle[aria-pressed="true"] .ico-on{display:block}
+@media(max-width:600px){.sound-toggle{width:34px;height:34px;margin-right:2px}}
+
+/* ---------- 3. 首屏摸奶蛙 ---------- */
+.hero-frog{
+  transform:translate(var(--mx,0px),var(--my,0px)) rotate(var(--tilt,0deg));
+  transition:transform .45s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
+}
+.hero-halo{transform:translateX(-50%) translate(calc(var(--mx,0px) * .38),calc(var(--my,0px) * .38))}
+/* 待机时轻轻起伏，用独立的 scale 属性，不干扰视差的 transform */
+.hero-frog{animation:idle-breath 7.5s ease-in-out infinite;animation-delay:1.2s}
+@keyframes idle-breath{
+  0%,100%{scale:1}
+  50%{scale:1.008}
+}
+
+/* 夜间模式：一层很淡的冷色叠加，不改变原有配色 */
+.night-veil{
+  position:fixed;inset:0;z-index:60;pointer-events:none;
+  background:#2a2320;opacity:0;mix-blend-mode:multiply;
+  transition:opacity .9s ease;
+}
+html[data-night="on"] .night-veil{opacity:.1}
+.night-toggle{margin-right:-6px}
+.halo-orbit{transform:rotate(-18deg) translate(calc(var(--mx,0px) * -.22),calc(var(--my,0px) * -.22))}
+.frog-touch{
+  -webkit-touch-callout:none;user-select:none;touch-action:manipulation;
+  cursor:grab;
+}
+.frog-touch:active{cursor:grabbing}
+
+/* 长按抱抱：腮红随 --hug 累积 */
+.frog-blush{
+  position:absolute;left:30%;top:5%;width:29%;height:12%;
+  border-radius:50%;pointer-events:none;z-index:2;
+  background:radial-gradient(closest-side,rgba(230,92,92,.95),rgba(230,100,100,.5) 52%,rgba(230,100,100,0) 82%);
+  opacity:calc(var(--hug,0) * .9);
+  transform:scale(calc(.78 + var(--hug,0) * .26));
+  mix-blend-mode:multiply;
+  transition:opacity .2s linear;
+}
+.frog-touch.is-hugging .hero-frog{
+  transform:translate(var(--mx,0px),calc(var(--my,0px) + var(--hug,0) * 5px)) rotate(var(--tilt,0deg)) scale(calc(1 + var(--hug,0) * .025));
+  transition:transform .5s cubic-bezier(.22,1,.36,1);
+}
+.frog-touch.is-hugging .frog-blush{transition:none}
+.hero-scene.is-milestone .hero-halo{animation:halo-glow 1.7s ease-out}
+@keyframes halo-glow{
+  0%{box-shadow:0 0 0 0 rgba(226,196,84,.55)}
+  60%{box-shadow:0 0 0 30px rgba(226,196,84,0)}
+  100%{box-shadow:0 0 0 0 rgba(226,196,84,0)}
+}
+.frog-touch.is-angry .hero-frog{animation:angry-puff .85s cubic-bezier(.22,1,.36,1)}
+@keyframes angry-puff{
+  0%{transform:scale(1,1)}
+  22%{transform:scale(1.11,.95) translateY(-3px)}
+  42%{transform:scale(1.03,1.02)}
+  62%{transform:scale(1.08,.98) translateY(-2px)}
+  82%{transform:scale(1.02,1.01)}
+  100%{transform:scale(1,1)}
+}
+.frog-touch.is-angry .frog-blush{
+  opacity:.9;transition:opacity .2s;
+  background:radial-gradient(closest-side,rgba(222,96,96,.95),rgba(222,96,96,0) 72%);
+}
+.heart-particle{will-change:transform,opacity}
+
+/* ---------- 4. 心情专属插图 ---------- */
+.mood-art__inner{
+  position:absolute;inset:0;z-index:1;
+  mix-blend-mode:multiply;
+  transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .38s ease;
+  will-change:transform,opacity;
+}
+.mood-panel{isolation:isolate}
+.mood-panel.is-swapping .mood-art__inner{transform:translateY(20px) scale(.93);opacity:0}
+.mood-panel.is-popping .mood-art__inner{animation:art-pop .78s cubic-bezier(.22,1,.36,1)}
+@keyframes art-pop{
+  0%{transform:translateY(20px) scale(.93);opacity:0}
+  55%{transform:translateY(-12px) scale(1.03);opacity:1}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+.mood-image{
+  position:absolute;inset:0;width:100%;height:100%;
+  left:0;bottom:0;max-width:none;
+  object-fit:contain;object-position:50% 100%;
+  transform-origin:50% 100%;
+  transition:transform .7s cubic-bezier(.22,1,.36,1);
+  mix-blend-mode:normal;
+  mask-image:linear-gradient(#000 78%,rgba(0,0,0,.55) 90%,transparent 100%);
+  -webkit-mask-image:linear-gradient(#000 78%,rgba(0,0,0,.55) 90%,transparent 100%);
+}
+/* 需要与原样式里 [data-mood="x"] .mood-image 同权重，才能在后面覆盖它的 translate */
+.mood-panel[data-mood] .mood-image{
+  transform:rotate(var(--art-rot,-2.4deg)) scale(var(--art-scale,1.08));
+}
+.mood-panel[data-mood="chill"]{--art-rot:-2.4deg;--art-scale:1.08}
+.mood-panel[data-mood="brave"]{--art-rot:2.2deg;--art-scale:1.1}
+.mood-panel[data-mood="happy"]{--art-rot:1.8deg;--art-scale:1.1}
+.mood-panel[data-mood="tired"] .mood-art__inner{mix-blend-mode:normal}
+.mood-panel[data-mood="tired"] .mood-image{
+  object-fit:cover;object-position:50% 30%;
+  transform:none;
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.35) 12%,#000 32%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.35) 12%,#000 32%);
+}
+.mood-panel[data-mood="tired"] .mood-art::before,
+.mood-panel[data-mood="tired"] .mood-art::after{display:none}
+.mood-panel[data-mood="tired"] .mood-stamp{background:rgba(255,255,255,.66);border-color:#8a95a840}
+.mood-stamp{transition:background .4s,border-color .4s}
+
+/* 心情面板的双按钮 */
+.mood-actions{display:flex;align-items:center;gap:26px;margin-top:30px;flex-wrap:wrap}
+.mood-actions .mood-save{margin-top:0}
+.mood-card-btn{opacity:.72}
+.mood-card-btn:hover{opacity:1}
+
+/* 心情日历 */
+.mood-cal-wrap{margin-top:22px}
+.mood-cal-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;font-size:10px;letter-spacing:1.4px;color:#9aa08f;margin-bottom:12px}
+.mood-cal-head #mood-cal-text{letter-spacing:.3px;color:#8d9184;text-align:right}
+.mood-cal{display:flex;gap:7px;flex-wrap:wrap}
+.mood-cal__day{
+  position:relative;width:36px;height:42px;border-radius:10px;flex:none;
+  border:1px solid #d9dece;background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:5px;gap:3px;transition:transform .25s cubic-bezier(.22,1,.36,1),border-color .25s;
+}
+.mood-cal__day i{width:16px;height:5px;border-radius:3px;background:#e3e7d8;display:block}
+.mood-cal__day em{font-style:normal;font-size:10px;color:#8e9484;font-variant-numeric:tabular-nums;line-height:1}
+.mood-cal__day.has-mood{border-color:#d3d8c6}
+.mood-cal__day.has-mood em{color:#5d6455}
+.mood-cal__day.is-today{border-color:#93a47a;background:#f5f8ec;box-shadow:0 0 0 3px rgba(147,164,122,.14)}
+.mood-cal__day.is-today em{font-weight:700;color:#2f3628}
+.mood-cal__day:hover{transform:translateY(-3px)}
+button.mood-cal__day{padding:0 0 5px;font:inherit;color:inherit;text-align:center;cursor:pointer}
+.mood-cal__day.is-active{box-shadow:0 0 0 2px #7d8f66}
+.mood-cal__day:focus-visible{outline:2px solid #668254;outline-offset:3px}
+.mood-cal-meta{display:flex;align-items:center;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.mood-cal-streak{
+  background:#eef2e0;color:#5d6b49;border-radius:20px;padding:3px 9px;
+  font-size:9px;letter-spacing:.4px;white-space:nowrap;
+}
+.mood-cal-streak[hidden]{display:none}
+.mood-cal-note{
+  margin:0;max-height:0;overflow:hidden;opacity:0;
+  font-size:11px;line-height:1.85;color:#78816b;
+  padding-left:10px;border-left:2px solid transparent;
+  transition:max-height .38s cubic-bezier(.22,1,.36,1),opacity .28s ease,margin-top .3s ease;
+}
+.mood-cal-note.show{max-height:70px;opacity:1;margin-top:11px;border-left-color:#c8d2b4}
+
+/* ---------- 5. 计时器：呼吸奶蛙 + 沉浸 ---------- */
+.timer-card{min-height:520px}
+.timer-display{width:234px;height:234px;margin:16px 0 2px}
+.timer-ring{width:234px;height:234px}
+.breath-disc{width:176px;height:176px;background:#dbe3c8}
+.timer-card.running .breath-disc{animation-duration:var(--breath)}
+.breath-frog{
+  position:absolute;left:50%;top:50%;width:150px;height:150px;
+  margin:-75px 0 0 -75px;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 50% 22%,#f6fae9,#e3ead2);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 6px 18px rgba(90,105,60,.07);
+  z-index:1;
+}
+.breath-frog img{
+  position:absolute;left:50%;bottom:-12px;height:158px;width:auto;
+  transform:translateX(-50%);transform-origin:50% 82%;
+  mix-blend-mode:multiply;
+  transition:transform .8s cubic-bezier(.22,1,.36,1);
+}
+.timer-card.running .breath-frog img{
+  animation:breathe-frog var(--breath) ease-in-out infinite;
+}
+.timer-card.paused .breath-frog img{animation-play-state:paused}
+.timer-card.paused .breath-disc{animation-play-state:paused}
+@keyframes breathe-frog{
+  0%,100%{transform:translateX(-50%) scale(.9,.92)}
+  50%{transform:translateX(-50%) scale(1.09,1.02)}
+}
+.timer-card.finished .breath-frog img{animation:stretch 1.5s cubic-bezier(.22,1,.36,1)}
+@keyframes stretch{
+  0%{transform:translateX(-50%) scale(.9,.92)}
+  30%{transform:translateX(-50%) translateY(-8px) scale(.96,1.12)}
+  55%{transform:translateX(-50%) translateY(-3px) scale(1.06,.98)}
+  75%{transform:translateX(-50%) translateY(-6px) scale(.98,1.07)}
+  100%{transform:translateX(-50%) scale(1,1)}
+}
+.timer-readout{display:flex;flex-direction:column;align-items:center;gap:5px;z-index:2}
+.timer-time{font-size:44px}
+.timer-prompt{margin-top:0}
+
+/* 环境声 */
+.ambient{display:flex;gap:6px;margin-top:14px;z-index:2;flex-wrap:wrap;justify-content:center}
+.ambient button{
+  font-size:9px;letter-spacing:.6px;padding:6px 11px;border-radius:20px;
+  background:transparent;color:#939c85;border:1px solid #cfd6bd;transition:.24s;
+}
+.ambient button:hover{background:#f2f6e6;color:#5f6d4e}
+.ambient button[aria-pressed="true"]{background:#6f7f58;border-color:#6f7f58;color:#fff}
+.ambient[data-disabled="true"]{opacity:.45}
+
+/* 沉浸模式 */
+.exit-focus{
+  position:fixed;right:24px;top:24px;z-index:80;display:none;
+  padding:11px 18px;border-radius:40px;background:rgba(255,255,255,.9);
+  color:#5e6a4d;font-size:11px;letter-spacing:.8px;
+  box-shadow:0 8px 30px rgba(60,70,40,.14);border:1px solid #dbe0cd;
+  backdrop-filter:blur(10px);
+}
+body.immersive .exit-focus{display:block}
+body.immersive{
+  position:fixed;left:0;right:0;width:100%;overflow:hidden;
+  background:radial-gradient(120% 100% at 50% 0%,#eef2e2,#dde5cd 70%,#d3dcbe);
+}
+body.immersive .site-header,
+body.immersive .hero,
+body.immersive .intro,
+body.immersive .moods,
+body.immersive .souvenir,
+body.immersive .site-footer{
+  opacity:0;filter:blur(6px);pointer-events:none;
+  transition:opacity .6s ease,filter .6s ease;
+}
+/* 沉浸时小蛙留在角落，光环仍在走，但不抢注意力 */
+body.immersive .buddy{opacity:.4;transform:scale(.86);pointer-events:none}
+/* .js .reveal.in-view 的权重比这两条高，必须强制覆盖，否则卡片不会居中 */
+body.immersive .focus-copy{opacity:0!important;transform:translateY(10px)!important;pointer-events:none;transition:.5s}
+body.immersive .focus-section{background:transparent}
+body.immersive .timer-card{
+  position:fixed;left:50%;top:50%;z-index:70;
+  width:min(430px,calc(100vw - 36px));min-height:0;
+  transform:translate(-50%,-50%)!important;
+  margin:0;padding:26px 26px 22px;
+  background:#f9fbf1;
+  box-shadow:0 40px 120px rgba(48,58,32,.22),0 0 0 1px rgba(255,255,255,.85),0 2px 0 rgba(255,255,255,.7) inset;
+  transition:transform .6s cubic-bezier(.22,1,.36,1),box-shadow .6s;
+}
+body.immersive .timer-card::after{opacity:0}
+body.immersive .timer-top{opacity:.55}
+body:not(.immersive) .timer-card{transition:transform .6s cubic-bezier(.22,1,.36,1),box-shadow .6s}
+
+/* ---------- 6. 心情卡 ---------- */
+.card-dialog:focus,.card-dialog:focus-visible,.welcome-dialog:focus,.welcome-dialog:focus-visible{outline:none}
+.dialog-layout{perspective:1500px}
+.card-dialog[open] .dialog-layout{animation:card-in .66s cubic-bezier(.22,1,.36,1) both}
+@keyframes card-in{
+  0%{opacity:0;transform:translateY(30px) rotateX(-13deg) scale(.96)}
+  100%{opacity:1;transform:none}
+}
+.dialog-preview{transition:transform .4s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.dialog-preview.is-flipping{transform:rotateY(84deg) scale(.97)}
+.dialog-preview::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:42%;z-index:3;
+  background:linear-gradient(160deg,#fffaf0,#efe1bf);
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  transform-origin:50% 0;backface-visibility:hidden;pointer-events:none;
+  box-shadow:0 1px 0 rgba(120,110,80,.14);
+  animation:flap-open 1.05s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes flap-open{
+  0%{transform:rotateX(0deg);opacity:1}
+  55%{transform:rotateX(-108deg);opacity:1}
+  85%{transform:rotateX(-124deg);opacity:.5}
+  100%{transform:rotateX(-128deg);opacity:0}
+}
+.postcard-image{transition:opacity .35s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+.postcard-image:not(.is-photo){mask-image:linear-gradient(#000 80%,rgba(0,0,0,.5) 92%,transparent 100%);-webkit-mask-image:linear-gradient(#000 80%,rgba(0,0,0,.5) 92%,transparent 100%)}
+.postcard-image.is-photo{mix-blend-mode:normal;border-radius:14px}
+.card-stats{
+  font-size:11px;line-height:1.85;color:#7d8a6b;margin:0 0 20px;
+  padding:11px 13px;border-radius:10px;background:#f2f5e8;border:1px solid #e4e9d6;
+}
+.card-actions{display:flex;flex-direction:column;gap:2px;width:100%}
+.dialog-share{
+  font-size:11px;background:transparent;padding:13px 0;color:#8d967f;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.dialog-share:hover{color:#5b6850}
+
+/* ---------- 7. 跟随滚动的小奶蛙 ---------- */
+.buddy{
+  position:fixed;right:24px;bottom:26px;z-index:45;
+  width:88px;height:88px;padding:0;background:transparent;border-radius:50%;overflow:hidden;
+  opacity:0;transform:translateY(18px) scale(.82);
+  pointer-events:none;
+  transition:opacity .45s ease,transform .5s cubic-bezier(.22,1,.36,1);
+}
+.buddy.show{opacity:1;transform:none;pointer-events:auto}
+.buddy-plate{
+  position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 30%,rgba(255,255,252,.96),rgba(246,248,236,.92));
+  box-shadow:0 10px 30px rgba(70,80,50,.13),inset 0 0 0 1px rgba(140,152,120,.22);
+  backdrop-filter:blur(6px);
+}
+.buddy img{
+  position:absolute;left:50%;bottom:-2px;height:84px;width:auto;
+  transform:translateX(-50%);
+  mix-blend-mode:multiply;
+  transition:transform .55s cubic-bezier(.22,1,.36,1),opacity .3s;
+  will-change:transform;
+}
+.buddy:hover img{transform:translateX(-50%) translateY(-4px) rotate(-3deg)}
+.buddy[data-scene="moods"] img{transform:translateX(-50%) translateY(2px) rotate(-10deg) scale(.98)}
+.buddy[data-scene="focus"] img{transform:translateX(-50%) translateY(4px) scale(.94)}
+.buddy[data-scene="souvenir"] img{transform:translateX(-50%) translateY(-2px) rotate(7deg) scale(1.02)}
+.buddy-prop{
+  position:absolute;right:2px;top:2px;width:24px;height:24px;border-radius:7px;
+  background:#f6df72;color:#6f653c;display:grid;place-items:center;
+  box-shadow:0 4px 10px rgba(120,105,50,.22);
+  opacity:0;transform:scale(.5) rotate(-14deg);transition:.4s cubic-bezier(.22,1,.36,1);
+}
+.buddy-prop svg{width:13px;height:13px}
+.buddy[data-scene="souvenir"] .buddy-prop{opacity:1;transform:scale(1) rotate(-6deg)}
+.buddy-tip{
+  position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+  white-space:nowrap;background:rgba(36,41,31,.92);color:#fff;font-size:10px;
+  letter-spacing:.6px;padding:7px 11px;border-radius:20px;opacity:0;pointer-events:none;
+  transition:.3s;
+}
+.buddy:hover .buddy-tip{opacity:1;transform:translateY(-50%) translateX(0)}
+.buddy-ring{
+  position:absolute;inset:0;width:88px;height:88px;pointer-events:none;
+  transform:rotate(-90deg);opacity:0;transition:opacity .4s ease;
+}
+.buddy.is-timing .buddy-ring{opacity:1}
+.buddy-ring circle{fill:none;stroke-width:2.5}
+.buddy-ring__track{stroke:rgba(110,126,92,.18)}
+.buddy-ring__bar{stroke:#7e9162;stroke-linecap:round;transition:stroke-dashoffset .5s linear}
+.buddy.wave img{animation:buddy-wave 1s ease}
+
+/* ---------- 8. 首次进入的仪式 ---------- */
+.welcome-dialog{
+  border:0;padding:0;border-radius:26px;width:min(720px,calc(100% - 32px));
+  max-height:calc(100dvh - 32px);overflow:auto;background:#fcfcf6;color:var(--ink);
+  box-shadow:0 40px 120px rgba(24,34,12,.26);
+}
+.welcome-dialog::backdrop{background:#1c2413b0;backdrop-filter:blur(8px)}
+.welcome-inner{padding:44px 44px 32px;text-align:center}
+.welcome-inner .eyebrow{font-size:9px;color:#97a283;letter-spacing:2.4px}
+.welcome-inner h2{font-size:30px;letter-spacing:-1.2px;font-weight:600;margin:15px 0 10px}
+.welcome-sub{font-size:12px;line-height:1.9;color:#8f9584;margin:0 auto 26px;max-width:400px}
+.welcome-options{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.welcome-options button{
+  background:#f5f7ee;border:1px solid #e6ead9;border-radius:16px;padding:10px 6px 12px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),background .25s,border-color .25s;
+}
+.welcome-options button:hover{transform:translateY(-4px);background:#eef2e2;border-color:#cdd8b8}
+.welcome-options img{width:100%;height:86px;object-fit:contain;mix-blend-mode:multiply}
+.welcome-options span{font-size:11px;color:#6d7563}
+.welcome-options small{font-size:9px;color:#a2a898;letter-spacing:.3px}
+.welcome-skip{
+  margin-top:22px;background:transparent;color:#a3a999;font-size:10px;letter-spacing:.8px;
+  padding:8px 4px;border-bottom:1px solid #dde0d4;
+}
+.welcome-skip:hover{color:#6f7764}
+@media(max-width:700px){
+  /* 卡片在窄屏改成上下排：标题在上、奶蛙居中、落款在底 */
+  .dialog-layout{grid-template-columns:1fr}
+  .dialog-preview{min-height:0;padding:24px 22px 16px;display:flex;flex-direction:column}
+  .postcard-title{font-size:23px;margin:8px 0 0}
+  .postcard-image{position:static;left:auto;transform:none;width:auto;max-height:180px;margin:6px auto 0}
+  .postcard-sign{position:static;margin-top:auto;padding-top:12px}
+  .dialog-content{padding:30px 22px 26px}
+  .dialog-preview::before{height:22%}
+  .card-stats{margin-bottom:16px}
+}
+@media(max-width:640px){
+  .welcome-inner{padding:32px 20px 24px}
+  .welcome-options{grid-template-columns:repeat(2,1fr)}
+  .welcome-options img{height:74px}
+  .welcome-inner h2{font-size:24px}
+}
+
+/* ---------- 9. 滚动叙事：逐字浮现 ---------- */
+.ch{
+  display:inline-block;color:inherit!important;opacity:0;transform:translateY(.34em) rotate(2deg);
+  transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);
+  transition-delay:calc(var(--i,0) * 24ms);
+}
+.reveal.in-view .ch,.ch.in-view{opacity:1;transform:none}
+.mood-panel.in-view .mood-art__inner{animation:art-enter .95s cubic-bezier(.22,1,.36,1)}
+@keyframes art-enter{
+  0%{transform:translateX(46px) translateY(26px) rotate(5deg);opacity:0}
+  100%{transform:none;opacity:1}
+}
+.timer-card.in-view .breath-frog{animation:frog-hop-in .9s cubic-bezier(.22,1,.36,1)}
+@keyframes frog-hop-in{
+  0%{transform:translateY(26px) scale(.86);opacity:0}
+  60%{transform:translateY(-6px) scale(1.02);opacity:1}
+  100%{transform:none;opacity:1}
+}
+
+/* ---------- 10. 响应式 ---------- */
+@media(max-width:1100px){
+  .timer-card{min-height:500px}
+  .dialog-preview::before{height:34%}
+}
+@media(max-width:800px){
+  .timer-card{min-height:470px}
+  .timer-display{width:206px;height:206px;margin:14px 0 2px}
+  .timer-ring{width:206px;height:206px}
+  .breath-disc{width:156px;height:156px}
+  .breath-frog{width:132px;height:132px;margin:-66px 0 0 -66px}
+  .breath-frog img{height:138px;bottom:-10px}
+  .timer-time{font-size:38px}
+  .buddy{width:74px;height:74px;right:16px;bottom:18px}
+  .buddy img{height:64px}
+  .mood-cal__day{width:30px;height:34px}
+  .mood-actions{gap:18px}
+}
+@media(max-width:600px){
+  /* 14 格挤在一行会让点击区域过小，窄屏改成可横向滑动、每格 34px */
+  .mood-cal{flex-wrap:nowrap;overflow-x:auto;gap:5px;padding-bottom:5px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .mood-cal::-webkit-scrollbar{display:none}
+  .mood-cal__day{flex:0 0 auto;width:34px;height:38px}
+  .mood-cal__day em{font-size:9px}
+  .mood-cal-head{font-size:9px;letter-spacing:.8px}
+  /* 小屏上会挡住计时器按钮，直接收起来 */
+  .buddy{display:none}
+  .buddy-tip{display:none}
+  .exit-focus{right:12px;top:12px;padding:9px 14px;font-size:10px}
+  body.immersive .timer-card{padding:20px 16px 18px;width:calc(100vw - 24px)}
+  .ambient button{font-size:8px;padding:5px 9px}
+  .timer-card{min-height:440px}
+  .mood-actions{gap:14px;margin-top:24px}
+  .dialog-preview::before{height:30%}
+}
+@media(max-width:360px){
+  .mood-cal__day{width:32px;height:36px}
+}
+
+/* ---------- 11. 减少动效 ---------- */
+@media(prefers-reduced-motion:reduce){
+  .ch{opacity:1!important;transform:none!important;transition:none!important}
+  .hero-frog{transform:none!important}
+  .frog-blush{transition:opacity .2s!important}
+  .buddy{transition:opacity .2s!important}
+  .card-dialog[open] .dialog-layout{animation:none!important}
+  .dialog-preview::before{display:none}
+  .dialog-preview{transition:none}
+  .mood-panel.is-popping .mood-art__inner,
+  .mood-panel.in-view .mood-art__inner,
+  .timer-card.in-view .breath-frog{animation:none!important}
+  body.immersive .timer-card{transition:none}
+}
